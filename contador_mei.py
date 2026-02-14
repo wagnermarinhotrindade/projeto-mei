@@ -15,69 +15,61 @@ st.set_page_config(
 # --- SISTEMA DE DESIGN (ANTI-GRAVITY v4.1) ---
 st.markdown("""
 <style>
-    /* 1. FUNDO E TEXTO GERAL */
+    /* --- 1. CONFIGURAÇÃO GERAL --- */
     .stApp {
         background-color: #0E1117;
     }
-    /* Força títulos e textos principais a serem brancos */
-    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown {
+    /* Força todo texto a ser branco para evitar "sumiço" */
+    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown, span {
         color: #FFFFFF !important;
     }
-    
-    /* CUIDADO: Mantém texto preto DENTRO dos cards brancos (se houver métricas) */
+    /* Exceção: Texto dentro de métricas/cards deve respeitar o fundo do card */
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
-        color: #000000 !important;
+        color: inherit !important;
     }
 
-    /* 2. HEADER TRANSPARENTE (Para o botão do menu funcionar) */
+    /* --- 2. HEADER E TOOLBAR (A Mágica do Sumiço) --- */
+    [data-testid="stDecoration"], [data-testid="stToolbar"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
     header[data-testid="stHeader"] {
         background: transparent !important;
-        pointer-events: none; /* Deixa clicar no conteúdo abaixo dele */
+        pointer-events: none !important;
     }
 
-    /* 3. ESCONDER BARRA SUPERIOR (GitHub, Deploy, etc.) */
-    [data-testid="stToolbar"] {
-        display: none !important;
-    }
-    [data-testid="stDecoration"] {
-        display: none !important;
-    }
-
-    /* 4. ESCONDER RODAPÉ E ÍCONES DE "VIEWER BADGE" (Coroa/Perfil) */
-    footer {
-        display: none !important;
-    }
-    #MainMenu {
-        display: none !important;
-    }
-    /* O seletor mágico para a Coroa e Perfil */
-    div[class*="viewerBadge"] {
-        display: none !important;
-    }
-
-    /* 5. BOTÃO DE MENU (Sempre visível e clicável) */
+    /* --- 3. O RESGATE DO MENU (Posição Fixa "Na Marra") --- */
     [data-testid="stSidebarCollapsedControl"] {
         display: block !important;
-        pointer-events: auto; /* Reativa o clique no botão */
-        color: #FFFFFF !important;
+        visibility: visible !important;
+        position: fixed !important;
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 1000005 !important;
         background-color: #1E1E1E !important;
+        color: #FFFFFF !important;
         border: 2px solid #FFFFFF !important;
         border-radius: 8px !important;
-        z-index: 999999 !important;
-        width: 50px !important;
-        height: 50px !important;
-        position: fixed !important;
-        top: 10px !important;
-        left: 10px !important;
+        padding: 4px !important;
+        width: 45px !important;
+        height: 45px !important;
+        pointer-events: auto !important;
     }
     [data-testid="stSidebarCollapsedControl"] svg {
         fill: #FFFFFF !important;
         stroke: #FFFFFF !important;
-        width: 30px !important;
-        height: 30px !important;
     }
 
-    /* --- ESTILOS COMPLEMENTARES DO SISTEMA (FINANCIAL MODE) --- */
+    /* --- 4. RODAPÉ E ÍCONES CHATOS --- */
+    footer { display: none !important; }
+    #MainMenu { display: none !important; }
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    .viewerBadge_container__1QSob { display: none !important; }
+
+    /* --- 5. ESTILOS DO SISTEMA (DASHBOARD) --- */
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     
     [data-testid="stSidebar"] {
@@ -108,7 +100,7 @@ st.markdown("""
     }
 
     .metric-label {
-        color: #555 !important; /* Força cinza nos labels internos do card */
+        color: #555 !important;
         font-size: 0.85rem;
         font-weight: 600;
         text-transform: uppercase;
@@ -116,7 +108,7 @@ st.markdown("""
     }
 
     .metric-value {
-        color: #000 !important; /* Força preto nos valores internos do card */
+        color: #000 !important;
         font-size: 1.6rem;
         font-weight: 700;
     }
