@@ -20,47 +20,57 @@ st.markdown("""
         background-color: #0E1117;
     }
 
-    /* 2. Sidebar (Menu Lateral) Escura */
+    /* 2. Esconder Elementos do Streamlit (Header, Footer, Menu Padrão) */
+    header[data-testid="stHeader"] {
+        visibility: hidden !important; /* Esconde a barra superior toda */
+        height: 0px !important;
+    }
+    footer {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    #MainMenu {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    .stDeployButton {
+        display: none !important;
+    }
+
+    /* 3. Sidebar (Menu Lateral) - Mantendo estilo Dark */
     [data-testid="stSidebar"] {
         background-color: #1E1E1E !important;
     }
     [data-testid="stSidebar"] * {
-        color: white !important; /* Texto branco */
+        color: white !important;
     }
 
-    /* 3. FORÇA BRUTA: Botão de Menu (Mobile e Desktop) */
+    /* 4. O RESGATE DO BOTÃO DE MENU */
+    /* Como escondemos o header, precisamos trazer o botão de volta à visibilidade */
     [data-testid="stSidebarCollapsedControl"] {
+        visibility: visible !important; /* Força visibilidade só deste item */
         background-color: #1E1E1E !important;
         color: #FFFFFF !important;
-        border: 2px solid #FFFFFF !important; /* Borda Branca para destacar */
+        border: 2px solid #FFFFFF !important;
         border-radius: 8px !important;
-        z-index: 999999 !important; /* Fica acima de tudo */
-        position: relative !important;
+        z-index: 9999999 !important; /* Acima de tudo */
+        position: fixed !important; /* Fixo na tela */
+        top: 10px !important;
+        left: 10px !important;
         display: block !important;
         width: 50px !important;
         height: 50px !important;
     }
 
-    /* 4. Garante que o ícone (seta/hambúrguer) seja branco */
+    /* Garante ícone branco */
     [data-testid="stSidebarCollapsedControl"] svg {
         fill: #FFFFFF !important;
         stroke: #FFFFFF !important;
         width: 30px !important;
         height: 30px !important;
     }
-    
-    /* 5. Header Transparente (para não tapar o botão) */
-    header[data-testid="stHeader"] {
-        background: transparent !important;
-        pointer-events: none; /* Deixa clicar através dele */
-    }
-    
-    /* Reabilita cliques nos botões do header */
-    header[data-testid="stHeader"] button {
-        pointer-events: auto;
-    }
 
-    /* --- ESTILOS ADICIONAIS DO SISTEMA --- */
+    /* --- ESTILOS ADICIONAIS DO SISTEMA (DASHBOARD) --- */
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     
     div[role="radiogroup"] label {
