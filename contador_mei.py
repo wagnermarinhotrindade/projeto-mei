@@ -36,25 +36,36 @@ st.markdown("""
     /* 1. FUNDO ESCURO */
     .stApp { background-color: #0E1117; }
     
-    /* 2. ESCONDE BOTÕES PERIGOSOS MANUALMENTE (REFORÇO) */
-    /* Esconde botão Fork, GitHub e Três Pontinhos */
-    [data-testid="stToolbar"] {
-        right: 2rem;
-        display: none !important; 
+    /* 2. REMOÇÃO CIRÚRGICA DO HEADER (RED CIRCLE) */
+    /* Esconde todo o conteúdo do header por padrão */
+    header[data-testid="stHeader"] {
+        visibility: hidden;
+        background-color: transparent !important;
     }
     
-    /* 3. MENUS E RODAPÉ */
-    footer { display: none !important; }
-    [data-testid="stDecoration"] { display: none !important; }
-    div[class*="viewerBadge"] { display: none !important; }
-
-    /* 4. GARANTE QUE O MENU (AMARELO) CONTINUE LÁ */
+    /* 3. RESGATE DO BOTÃO DE MENU (YELLOW CIRCLE) */
+    /* Força a visibilidade apenas do controle da sidebar */
     [data-testid="stSidebarCollapsedControl"] {
+        visibility: visible !important;
         display: block !important;
         color: white !important;
-        z-index: 100000 !important; /* Prioridade máxima */
     }
+    [data-testid="stSidebarCollapsedControl"] svg {
+        fill: white !important;
+        stroke: white !important;
+    }
+
+    /* 4. LIMPEZA DE TOOLBAR E BADGES RESIDUAIS */
+    [data-testid="stToolbar"] { display: none !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    footer { display: none !important; }
     
+    /* Oculta Viewer Badge (Coroa/Perfil) */
+    div[class*="viewerBadge"], [class^="viewerBadge"], [data-testid="stStatusWidget"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
     /* 5. TEXTOS LEGIÍVEIS */
     h1, h2, h3, p, label { color: white !important; }
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: inherit !important; }
