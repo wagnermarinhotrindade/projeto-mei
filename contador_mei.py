@@ -15,52 +15,65 @@ st.set_page_config(
 # --- SISTEMA DE DESIGN (ANTI-GRAVITY v4.1) ---
 st.markdown("""
 <style>
-    /* 1. Força o fundo da Sidebar a ser escuro */
+    /* 1. Ajuste Geral do Fundo */
+    .stApp {
+        background-color: #0E1117;
+    }
+
+    /* 2. Sidebar (Menu Lateral) Escura */
     [data-testid="stSidebar"] {
         background-color: #1E1E1E !important;
     }
-
-    /* 2. Força os textos do menu a serem brancos */
     [data-testid="stSidebar"] * {
-        color: white !important;
+        color: white !important; /* Texto branco */
     }
 
-    /* 3. O PULO DO GATO: Botão de abrir menu no Mobile */
+    /* 3. FORÇA BRUTA: Botão de Menu (Mobile e Desktop) */
     [data-testid="stSidebarCollapsedControl"] {
         background-color: #1E1E1E !important;
-        color: white !important;
-        border: 1px solid #333 !important;
-        border-radius: 5px;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        color: #FFFFFF !important;
+        border: 2px solid #FFFFFF !important; /* Borda Branca para destacar */
+        border-radius: 8px !important;
+        z-index: 999999 !important; /* Fica acima de tudo */
+        position: relative !important;
+        display: block !important;
+        width: 50px !important;
+        height: 50px !important;
     }
 
-    /* 4. Aumenta a área de clique do botão no celular */
-    @media (max-width: 768px) {
-        [data-testid="stSidebarCollapsedControl"] {
-            width: 50px !important;
-            height: 50px !important;
-            top: 10px !important;
-            left: 10px !important;
-        }
+    /* 4. Garante que o ícone (seta/hambúrguer) seja branco */
+    [data-testid="stSidebarCollapsedControl"] svg {
+        fill: #FFFFFF !important;
+        stroke: #FFFFFF !important;
+        width: 30px !important;
+        height: 30px !important;
+    }
+    
+    /* 5. Header Transparente (para não tapar o botão) */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        pointer-events: none; /* Deixa clicar através dele */
+    }
+    
+    /* Reabilita cliques nos botões do header */
+    header[data-testid="stHeader"] button {
+        pointer-events: auto;
     }
 
-    /* Outros Ajustes de UI */
+    /* --- ESTILOS ADICIONAIS DO SISTEMA --- */
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
-    header { visibility: hidden; }
     
     div[role="radiogroup"] label {
         color: white !important;
         font-weight: 500;
     }
 
-    /* Cards do Dashboard (Financial Mode) */
     .metric-container {
         display: flex;
         gap: 20px;
         margin-bottom: 25px;
     }
+
     .metric-card {
         background-color: white;
         padding: 20px;
@@ -69,6 +82,7 @@ st.markdown("""
         flex: 1;
         border-top: 5px solid #2e7d32;
     }
+
     .metric-label {
         color: #555;
         font-size: 0.85rem;
@@ -76,6 +90,7 @@ st.markdown("""
         text-transform: uppercase;
         margin-bottom: 8px;
     }
+
     .metric-value {
         color: #000;
         font-size: 1.6rem;
