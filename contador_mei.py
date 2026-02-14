@@ -15,78 +15,59 @@ st.set_page_config(
 # --- SISTEMA DE DESIGN (ANTI-GRAVITY v4.1) ---
 st.markdown("""
 <style>
-    /* 1. BLINDAGEM DO FUNDO */
+    /* 1. FUNDO GERAL (PRETO) */
     .stApp {
         background-color: #0E1117;
     }
 
-    /* 2. SUMIR COM A BARRA SUPERIOR (Mas salvar o botão) */
-    /* Deixa o header transparent e "intocável" para não bloquear cliques */
+    /* 2. CAMUFLAGEM DA BARRA SUPERIOR (HEADER) */
+    /* Não escondemos o header (display:none), pois isso mata o menu. */
+    /* Em vez disso, pintamos ele da cor do fundo! */
     header[data-testid="stHeader"] {
-        background: transparent !important;
-        pointer-events: none !important; 
+        background-color: #0E1117 !important; /* Mesma cor do fundo */
+        border-bottom: none !important;      /* Sem borda */
+        z-index: 1 !important;               /* Fica atrás do menu */
     }
-    /* Esconde a decoração colorida e a barra de ferramentas (GitHub/Deploy) */
-    [data-testid="stDecoration"], [data-testid="stToolbar"] {
+
+    /* 3. ESCONDER APENAS O QUE NÃO QUEREMOS NO TOPO */
+    /* Esconde a linha colorida (decoração) */
+    [data-testid="stDecoration"] {
         display: none !important;
+    }
+    /* Esconde os botões da direita (GitHub, Deploy, Opções) */
+    [data-testid="stToolbar"] {
         visibility: hidden !important;
         height: 0 !important;
     }
 
-    /* 3. O RESGATE DO MENU (POSIÇÃO FIXA FORÇADA) */
-    /* Arranca o botão do fluxo normal e cola na tela */
-    button[data-testid="stSidebarCollapsedControl"] {
+    /* 4. O BOTÃO DO MENU (AGORA VAI APARECER!) */
+    /* Como o header existe, o botão volta a funcionar nativamente */
+    [data-testid="stSidebarCollapsedControl"] {
+        color: #FFFFFF !important; /* Ícone branco */
         display: block !important;
-        position: fixed !important; 
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 1000001 !important; /* Camada estratosférica */
-        
-        /* Estilo para garantir visibilidade no preto */
-        background-color: #262730 !important;
-        color: #ffffff !important;
-        border: 2px solid #4e4e4e !important;
-        border-radius: 8px !important;
-        
-        /* Reativa o clique (pois o header estava bloqueado) */
-        pointer-events: auto !important; 
-        transition: all 0.3s ease !important;
     }
-    /* Efeito ao passar o mouse (opcional) */
-    button[data-testid="stSidebarCollapsedControl"]:hover {
-        border-color: #ffbd45 !important;
-    }
-    /* Ícone interno branco */
-    button[data-testid="stSidebarCollapsedControl"] > svg {
-        fill: white !important;
-        stroke: white !important;
-    }
-
-    /* 4. MATA O RODAPÉ E A COROA (VIEWER BADGE) */
+    
+    /* 5. RODAPÉ E ÍCONES CHATOS */
     footer {
         display: none !important;
     }
-    /* Seletor Inteligente: Pega qualquer classe que tenha 'viewerBadge' no nome */
+    /* Tenta esconder a Coroa/Perfil (Viewer Badge) */
+    /* Nota: No plano grátis, o Streamlit às vezes força isso via JavaScript, mas o CSS tenta esconder */
     div[class*="viewerBadge"] {
         display: none !important;
         opacity: 0 !important;
-        pointer-events: none !important;
     }
-    /* Seletor de backup para o widget de status */
-    [data-testid="stStatusWidget"] {
-        display: none !important;
+    
+    /* 6. CORREÇÃO DE TEXTO GERAL */
+    h1, h2, h3, p, span, div {
+        color: #FFFFFF;
     }
-
-    /* 5. CORREÇÃO DE TEXTOS ESCUROS */
-    /* Força texto branco, mas preserva métricas */
-    h1, h2, h3, h4, p, span, div {
-        color: #ffffff;
-    }
+    /* Exceção para textos dentro de cartões de métricas (para não ficarem brancos no branco) */
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
-        color: inherit !important; /* Respeita a cor do card */
+        color: inherit !important;
     }
 
-    /* --- ESTILOS COMPLEMENTARES DO SISTEMA (DASHBOARD) --- */
+    /* --- 7. ESTILOS COMPLEMENTARES DO SISTEMA (DASHBOARD) --- */
     .metric-container {
         display: flex;
         gap: 20px;
