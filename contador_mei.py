@@ -3,71 +3,86 @@ import pandas as pd
 from datetime import datetime
 import time
 from st_supabase_connection import SupabaseConnection
+import os
 
-# --- CONFIGURAÇÃO DA PÁGINA ---
+# --- 1. CONFIGURAÇÃO AUTOMÁTICA DO SERVIDOR (ROBÔ DE CORREÇÃO) ---
+def setup_config():
+    config_dir = ".streamlit"
+    config_file = os.path.join(config_dir, "config.toml")
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+    config_content = """
+[client]
+toolbarMode = "viewer"
+showSidebarNavigation = true
+
+[theme]
+base = "dark"
+primaryColor = "#FF4B4B"
+"""
+    if not os.path.exists(config_file):
+        with open(config_file, "w") as f:
+            f.write(config_content)
+
+setup_config()
+
+# --- 2. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Contador MEI Pro", 
-    page_icon="👮‍♂️", 
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="Contador MEI",
+    page_icon="🦁",
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-# --- SISTEMA DE DESIGN (ANTI-GRAVITY v4.1) ---
+# --- 3. CSS CIRÚRGICO (VISUAL) ---
 st.markdown("""
 <style>
-    /* 1. FUNDO GERAL (PRETO) */
+    /* FUNDO ESCURO GERAL */
     .stApp {
         background-color: #0E1117;
     }
-
-    /* 2. CAMUFLAGEM DA BARRA SUPERIOR (HEADER) */
-    /* Não escondemos o header (display:none), pois isso mata o menu. */
-    /* Em vez disso, pintamos ele da cor do fundo! */
+    
+    /* CABEÇALHO TRANSPARENTE */
     header[data-testid="stHeader"] {
-        background-color: #0E1117 !important; /* Mesma cor do fundo */
-        border-bottom: none !important;      /* Sem borda */
-        z-index: 1 !important;               /* Fica atrás do menu */
+        background-color: transparent !important;
+        backdrop-filter: none !important;
     }
-
-    /* 3. ESCONDER APENAS O QUE NÃO QUEREMOS NO TOPO */
-    /* Esconde a linha colorida (decoração) */
+    
+    /* ESCONDER LINHA DECORATIVA */
     [data-testid="stDecoration"] {
         display: none !important;
     }
-    /* Esconde os botões da direita (GitHub, Deploy, Opções) */
-    [data-testid="stToolbar"] {
-        visibility: hidden !important;
-        height: 0 !important;
-    }
-
-    /* 4. O BOTÃO DO MENU (AGORA VAI APARECER!) */
-    /* Como o header existe, o botão volta a funcionar nativamente */
-    [data-testid="stSidebarCollapsedControl"] {
-        color: #FFFFFF !important; /* Ícone branco */
-        display: block !important;
-    }
     
-    /* 5. RODAPÉ E ÍCONES CHATOS */
+    /* ESCONDER RODAPÉ */
     footer {
         display: none !important;
     }
-    /* Tenta esconder a Coroa/Perfil (Viewer Badge) */
-    /* Nota: No plano grátis, o Streamlit às vezes força isso via JavaScript, mas o CSS tenta esconder */
-    div[class*="viewerBadge"] {
-        display: none !important;
-        opacity: 0 !important;
+    
+    /* ÍCONE DO MENU BRANCO */
+    [data-testid="stSidebarCollapsedControl"] {
+        color: white !important;
+        display: block !important;
+    }
+    [data-testid="stSidebarCollapsedControl"] svg {
+        fill: white !important;
+        stroke: white !important;
     }
     
-    /* 6. CORREÇÃO DE TEXTO GERAL */
-    h1, h2, h3, p, span, div {
-        color: #FFFFFF;
+    /* Ocultar Viewer Badge */
+    .viewerBadge_container__1QSob, [data-testid="stStatusWidget"] {
+        display: none !important;
+        visibility: hidden !important;
     }
-    /* Exceção para textos dentro de cartões de métricas (para não ficarem brancos no branco) */
+
+    /* CORREÇÃO DE TEXTOS */
+    h1, h2, h3, p, span, div, label {
+        color: white;
+    }
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
         color: inherit !important;
     }
 
-    /* --- 7. ESTILOS COMPLEMENTARES DO SISTEMA (DASHBOARD) --- */
+    /* --- ESTILOS COMPLEMENTARES DO SISTEMA (DASHBOARD) --- */
     .metric-container {
         display: flex;
         gap: 20px;
