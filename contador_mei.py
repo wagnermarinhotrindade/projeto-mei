@@ -1,16 +1,19 @@
 import streamlit as st
+import os
 import pandas as pd
 from datetime import datetime
 import time
 from st_supabase_connection import SupabaseConnection
-import os
 
-# --- 1. CONFIGURAÇÃO AUTOMÁTICA DO SERVIDOR (ROBÔ DE CORREÇÃO) ---
+# --- 1. CONFIGURAÇÃO DE SEGURANÇA (ROBÔ CORRIGIDO) ---
 def setup_config():
     config_dir = ".streamlit"
     config_file = os.path.join(config_dir, "config.toml")
+    
     if not os.path.exists(config_dir):
         os.makedirs(config_dir)
+    
+    # AQUI ESTÁ O SEGREDO: toolbarMode = "viewer" esconde o botão de código
     config_content = """
 [client]
 toolbarMode = "viewer"
@@ -20,69 +23,43 @@ showSidebarNavigation = true
 base = "dark"
 primaryColor = "#FF4B4B"
 """
-    if not os.path.exists(config_file):
-        with open(config_file, "w") as f:
-            f.write(config_content)
+    with open(config_file, "w") as f:
+        f.write(config_content)
 
 setup_config()
 
-# --- 2. CONFIGURAÇÃO DA PÁGINA ---
-st.set_page_config(
-    page_title="Contador MEI",
-    page_icon="🦁",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
+# --- 2. CSS DE LIMPEZA VISUAL (SÓ O QUE PRECISA) ---
+st.set_page_config(page_title="Contador MEI", page_icon="🦁", layout="centered", initial_sidebar_state="collapsed")
 
-# --- 3. CSS CIRÚRGICO (VISUAL) ---
 st.markdown("""
 <style>
-    /* FUNDO ESCURO GERAL */
-    .stApp {
-        background-color: #0E1117;
+    /* 1. FUNDO ESCURO */
+    .stApp { background-color: #0E1117; }
+    
+    /* 2. ESCONDE BOTÕES PERIGOSOS MANUALMENTE (REFORÇO) */
+    /* Esconde botão Fork, GitHub e Três Pontinhos */
+    [data-testid="stToolbar"] {
+        right: 2rem;
+        display: none !important; 
     }
     
-    /* CABEÇALHO TRANSPARENTE */
-    header[data-testid="stHeader"] {
-        background-color: transparent !important;
-        backdrop-filter: none !important;
-    }
-    
-    /* ESCONDER LINHA DECORATIVA */
-    [data-testid="stDecoration"] {
-        display: none !important;
-    }
-    
-    /* ESCONDER RODAPÉ */
-    footer {
-        display: none !important;
-    }
-    
-    /* ÍCONE DO MENU BRANCO */
+    /* 3. MENUS E RODAPÉ */
+    footer { display: none !important; }
+    [data-testid="stDecoration"] { display: none !important; }
+    div[class*="viewerBadge"] { display: none !important; }
+
+    /* 4. GARANTE QUE O MENU (AMARELO) CONTINUE LÁ */
     [data-testid="stSidebarCollapsedControl"] {
-        color: white !important;
         display: block !important;
-    }
-    [data-testid="stSidebarCollapsedControl"] svg {
-        fill: white !important;
-        stroke: white !important;
+        color: white !important;
+        z-index: 100000 !important; /* Prioridade máxima */
     }
     
-    /* Ocultar Viewer Badge */
-    .viewerBadge_container__1QSob, [data-testid="stStatusWidget"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
+    /* 5. TEXTOS LEGIÍVEIS */
+    h1, h2, h3, p, label { color: white !important; }
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] { color: inherit !important; }
 
-    /* CORREÇÃO DE TEXTOS */
-    h1, h2, h3, p, span, div, label {
-        color: white;
-    }
-    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
-        color: inherit !important;
-    }
-
-    /* --- ESTILOS COMPLEMENTARES DO SISTEMA (DASHBOARD) --- */
+    /* --- 6. ESTILOS COMPLEMENTARES DO SISTEMA (DASHBOARD) --- */
     .metric-container {
         display: flex;
         gap: 20px;
