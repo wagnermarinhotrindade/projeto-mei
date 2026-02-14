@@ -15,19 +15,41 @@ st.set_page_config(
 # --- SISTEMA DE DESIGN (ANTI-GRAVITY v4.1) ---
 st.markdown("""
 <style>
-    /* Reset de Espaço no Topo */
-    .block-container { padding-top: 1rem; padding-bottom: 0rem; }
-    header { visibility: hidden; }
-    
-    /* Sidebar Escura e Visível */
+    /* 1. Força o fundo da Sidebar a ser escuro */
     [data-testid="stSidebar"] {
         background-color: #1E1E1E !important;
-        color: white !important;
     }
+
+    /* 2. Força os textos do menu a serem brancos */
     [data-testid="stSidebar"] * {
         color: white !important;
     }
-    /* Estilização do Radio no Sidebar */
+
+    /* 3. O PULO DO GATO: Botão de abrir menu no Mobile */
+    [data-testid="stSidebarCollapsedControl"] {
+        background-color: #1E1E1E !important;
+        color: white !important;
+        border: 1px solid #333 !important;
+        border-radius: 5px;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* 4. Aumenta a área de clique do botão no celular */
+    @media (max-width: 768px) {
+        [data-testid="stSidebarCollapsedControl"] {
+            width: 50px !important;
+            height: 50px !important;
+            top: 10px !important;
+            left: 10px !important;
+        }
+    }
+
+    /* Outros Ajustes de UI */
+    .block-container { padding-top: 1rem; padding-bottom: 0rem; }
+    header { visibility: hidden; }
+    
     div[role="radiogroup"] label {
         color: white !important;
         font-weight: 500;
@@ -60,7 +82,6 @@ st.markdown("""
         font-weight: 700;
     }
 
-    /* Rodapé Sidebar */
     .sidebar-footer {
         position: fixed;
         bottom: 15px;
