@@ -15,26 +15,27 @@ st.set_page_config(
 # --- SISTEMA DE DESIGN (ANTI-GRAVITY v4.1) ---
 st.markdown("""
 <style>
-    /* 1. Fundo Geral do App */
+    /* 1. FUNDO E TEXTO GERAL */
     .stApp {
         background-color: #0E1117;
     }
-
-    /* 2. Sidebar (Menu Lateral) */
-    [data-testid="stSidebar"] {
-        background-color: #1E1E1E !important;
+    /* Força títulos e textos principais a serem brancos */
+    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown {
+        color: #FFFFFF !important;
     }
-    [data-testid="stSidebar"] * {
-        color: white !important;
+    
+    /* CUIDADO: Mantém texto preto DENTRO dos cards brancos (se houver métricas) */
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+        color: #000000 !important;
     }
 
-    /* 3. HEADER (Transparente para não cobrir o botão do menu) */
+    /* 2. HEADER TRANSPARENTE (Para o botão do menu funcionar) */
     header[data-testid="stHeader"] {
         background: transparent !important;
-        z-index: 1; /* Baixo nível para não bloquear cliques */
+        pointer-events: none; /* Deixa clicar no conteúdo abaixo dele */
     }
 
-    /* 4. ESCONDER ITENS DO TOPO (GitHub, Deploy, etc.) */
+    /* 3. ESCONDER BARRA SUPERIOR (GitHub, Deploy, etc.) */
     [data-testid="stToolbar"] {
         display: none !important;
     }
@@ -42,35 +43,33 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 5. ESCONDER RODAPÉ E BOTÕES DE ADMINISTRAÇÃO (Manage App) */
+    /* 4. ESCONDER RODAPÉ E ÍCONES DE "VIEWER BADGE" (Coroa/Perfil) */
     footer {
         display: none !important;
-        visibility: hidden !important;
     }
     #MainMenu {
         display: none !important;
     }
-    /* Esconde a barra flutuante inferior direita (Viewer Badge) */
+    /* O seletor mágico para a Coroa e Perfil */
     div[class*="viewerBadge"] {
         display: none !important;
     }
 
-    /* 6. FORÇAR VISIBILIDADE DO BOTÃO DE MENU (O Resgate) */
+    /* 5. BOTÃO DE MENU (Sempre visível e clicável) */
     [data-testid="stSidebarCollapsedControl"] {
         display: block !important;
+        pointer-events: auto; /* Reativa o clique no botão */
         color: #FFFFFF !important;
         background-color: #1E1E1E !important;
         border: 2px solid #FFFFFF !important;
         border-radius: 8px !important;
-        z-index: 999999 !important; /* Fica acima de tudo */
+        z-index: 999999 !important;
         width: 50px !important;
         height: 50px !important;
         position: fixed !important;
         top: 10px !important;
         left: 10px !important;
     }
-    
-    /* Ícone do menu branco */
     [data-testid="stSidebarCollapsedControl"] svg {
         fill: #FFFFFF !important;
         stroke: #FFFFFF !important;
@@ -78,9 +77,16 @@ st.markdown("""
         height: 30px !important;
     }
 
-    /* --- ESTILOS COMPLEMENTARES DO SISTEMA --- */
+    /* --- ESTILOS COMPLEMENTARES DO SISTEMA (FINANCIAL MODE) --- */
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     
+    [data-testid="stSidebar"] {
+        background-color: #1E1E1E !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: white !important;
+    }
+
     div[role="radiogroup"] label {
         color: white !important;
         font-weight: 500;
@@ -102,7 +108,7 @@ st.markdown("""
     }
 
     .metric-label {
-        color: #555;
+        color: #555 !important; /* Força cinza nos labels internos do card */
         font-size: 0.85rem;
         font-weight: 600;
         text-transform: uppercase;
@@ -110,7 +116,7 @@ st.markdown("""
     }
 
     .metric-value {
-        color: #000;
+        color: #000 !important; /* Força preto nos valores internos do card */
         font-size: 1.6rem;
         font-weight: 700;
     }
