@@ -15,29 +15,83 @@ st.set_page_config(
 # --- SISTEMA DE DESIGN (ANTI-GRAVITY v4.1) ---
 st.markdown("""
 <style>
-    /* --- 1. RESET GERAL E FUNDO (ANTI-GRAVITY v4.2) --- */
+    /* 1. BLINDAGEM DO FUNDO */
     .stApp {
         background-color: #0E1117;
     }
-    
-    /* Força textos gerais a serem brancos */
-    h1, h2, h3, h4, h5, h6, p, li, label, .stMarkdown {
-        color: #FFFFFF !important;
+
+    /* 2. SUMIR COM A BARRA SUPERIOR (Mas salvar o botão) */
+    /* Deixa o header transparent e "intocável" para não bloquear cliques */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        pointer-events: none !important; 
+    }
+    /* Esconde a decoração colorida e a barra de ferramentas (GitHub/Deploy) */
+    [data-testid="stDecoration"], [data-testid="stToolbar"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
     }
 
-    /* --- 2. EXCEÇÃO CRÍTICA: CARDS DE MÉTRICAS --- */
-    /* Garante que os números dentro dos cards brancos sejam PRETOS */
-    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
-        color: #000000 !important;
+    /* 3. O RESGATE DO MENU (POSIÇÃO FIXA FORÇADA) */
+    /* Arranca o botão do fluxo normal e cola na tela */
+    button[data-testid="stSidebarCollapsedControl"] {
+        display: block !important;
+        position: fixed !important; 
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 1000001 !important; /* Camada estratosférica */
+        
+        /* Estilo para garantir visibilidade no preto */
+        background-color: #262730 !important;
+        color: #ffffff !important;
+        border: 2px solid #4e4e4e !important;
+        border-radius: 8px !important;
+        
+        /* Reativa o clique (pois o header estava bloqueado) */
+        pointer-events: auto !important; 
+        transition: all 0.3s ease !important;
     }
-    
-    /* Estilos Estruturais do Card */
+    /* Efeito ao passar o mouse (opcional) */
+    button[data-testid="stSidebarCollapsedControl"]:hover {
+        border-color: #ffbd45 !important;
+    }
+    /* Ícone interno branco */
+    button[data-testid="stSidebarCollapsedControl"] > svg {
+        fill: white !important;
+        stroke: white !important;
+    }
+
+    /* 4. MATA O RODAPÉ E A COROA (VIEWER BADGE) */
+    footer {
+        display: none !important;
+    }
+    /* Seletor Inteligente: Pega qualquer classe que tenha 'viewerBadge' no nome */
+    div[class*="viewerBadge"] {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    /* Seletor de backup para o widget de status */
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
+
+    /* 5. CORREÇÃO DE TEXTOS ESCUROS */
+    /* Força texto branco, mas preserva métricas */
+    h1, h2, h3, h4, p, span, div {
+        color: #ffffff;
+    }
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+        color: inherit !important; /* Respeita a cor do card */
+    }
+
+    /* --- ESTILOS COMPLEMENTARES DO SISTEMA (DASHBOARD) --- */
     .metric-container {
         display: flex;
         gap: 20px;
         margin-bottom: 25px;
     }
-
     .metric-card {
         background-color: white;
         padding: 20px;
@@ -46,7 +100,6 @@ st.markdown("""
         flex: 1;
         border-top: 5px solid #2e7d32;
     }
-
     .metric-label {
         color: #555 !important;
         font-size: 0.85rem;
@@ -54,65 +107,11 @@ st.markdown("""
         text-transform: uppercase;
         margin-bottom: 8px;
     }
-
     .metric-value {
         color: #000 !important;
         font-size: 1.6rem;
         font-weight: 700;
     }
-
-    /* --- 3. HEADER FANTASMA (Invisível mas funcional) --- */
-    header[data-testid="stHeader"] {
-        background: transparent !important;
-        pointer-events: none !important; /* Permite clicar através dele */
-    }
-    /* Esconde barra colorida e botões da direita (Github/Deploy) */
-    [data-testid="stDecoration"], [data-testid="stToolbar"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-
-    /* --- 4. O RESGATE DO BOTÃO DE MENU (Técnica Fixed Overlay) --- */
-    [data-testid="stSidebarCollapsedControl"] {
-        display: block !important;
-        visibility: visible !important;
-        position: fixed !important; /* Fixa na tela, ignora o header */
-        top: 20px !important;
-        left: 20px !important;
-        z-index: 9999999 !important; /* Acima de tudo */
-        
-        /* Estilo Visual do Botão */
-        background-color: #1E1E1E !important;
-        color: #FFFFFF !important;
-        border: 1px solid #555555 !important;
-        border-radius: 8px !important;
-        padding: 0.5rem !important;
-        width: 45px !important;
-        height: 45px !important;
-        pointer-events: auto !important; /* Garante o clique */
-    }
-    /* Ícone do menu sempre branco */
-    [data-testid="stSidebarCollapsedControl"] svg {
-        fill: #FFFFFF !important;
-        stroke: #FFFFFF !important;
-        width: 25px !important;
-        height: 25px !important;
-    }
-
-    /* --- 5. LIMPEZA TOTAL DE RODAPÉ E BADGES --- */
-    footer {
-        display: none !important;
-    }
-    #MainMenu {
-        display: none !important;
-    }
-    /* Oculta a Coroa/Perfil (Viewer Badge) no canto inferior */
-    div[class^='viewerBadge'] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-
-    /* --- 6. SIDEBAR E COMPONENTES --- */
     [data-testid="stSidebar"] {
         background-color: #1E1E1E !important;
     }
