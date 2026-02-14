@@ -15,29 +15,12 @@ st.set_page_config(
 # --- SISTEMA DE DESIGN (ANTI-GRAVITY v4.1) ---
 st.markdown("""
 <style>
-    /* 1. Ajuste Geral do Fundo */
+    /* 1. Fundo Geral do App */
     .stApp {
         background-color: #0E1117;
     }
 
-    /* 2. Esconder Elementos do Streamlit (Header, Footer, Menu Padrão) */
-    header[data-testid="stHeader"] {
-        visibility: hidden !important; /* Esconde a barra superior toda */
-        height: 0px !important;
-    }
-    footer {
-        visibility: hidden !important;
-        display: none !important;
-    }
-    #MainMenu {
-        visibility: hidden !important;
-        display: none !important;
-    }
-    .stDeployButton {
-        display: none !important;
-    }
-
-    /* 3. Sidebar (Menu Lateral) - Mantendo estilo Dark */
+    /* 2. Sidebar (Menu Lateral) */
     [data-testid="stSidebar"] {
         background-color: #1E1E1E !important;
     }
@@ -45,24 +28,49 @@ st.markdown("""
         color: white !important;
     }
 
-    /* 4. O RESGATE DO BOTÃO DE MENU */
-    /* Como escondemos o header, precisamos trazer o botão de volta à visibilidade */
-    [data-testid="stSidebarCollapsedControl"] {
-        visibility: visible !important; /* Força visibilidade só deste item */
-        background-color: #1E1E1E !important;
-        color: #FFFFFF !important;
-        border: 2px solid #FFFFFF !important;
-        border-radius: 8px !important;
-        z-index: 9999999 !important; /* Acima de tudo */
-        position: fixed !important; /* Fixo na tela */
-        top: 10px !important;
-        left: 10px !important;
-        display: block !important;
-        width: 50px !important;
-        height: 50px !important;
+    /* 3. HEADER (Transparente para não cobrir o botão do menu) */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        z-index: 1; /* Baixo nível para não bloquear cliques */
     }
 
-    /* Garante ícone branco */
+    /* 4. ESCONDER ITENS DO TOPO (GitHub, Deploy, etc.) */
+    [data-testid="stToolbar"] {
+        display: none !important;
+    }
+    [data-testid="stDecoration"] {
+        display: none !important;
+    }
+
+    /* 5. ESCONDER RODAPÉ E BOTÕES DE ADMINISTRAÇÃO (Manage App) */
+    footer {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    #MainMenu {
+        display: none !important;
+    }
+    /* Esconde a barra flutuante inferior direita (Viewer Badge) */
+    div[class*="viewerBadge"] {
+        display: none !important;
+    }
+
+    /* 6. FORÇAR VISIBILIDADE DO BOTÃO DE MENU (O Resgate) */
+    [data-testid="stSidebarCollapsedControl"] {
+        display: block !important;
+        color: #FFFFFF !important;
+        background-color: #1E1E1E !important;
+        border: 2px solid #FFFFFF !important;
+        border-radius: 8px !important;
+        z-index: 999999 !important; /* Fica acima de tudo */
+        width: 50px !important;
+        height: 50px !important;
+        position: fixed !important;
+        top: 10px !important;
+        left: 10px !important;
+    }
+    
+    /* Ícone do menu branco */
     [data-testid="stSidebarCollapsedControl"] svg {
         fill: #FFFFFF !important;
         stroke: #FFFFFF !important;
@@ -70,7 +78,7 @@ st.markdown("""
         height: 30px !important;
     }
 
-    /* --- ESTILOS ADICIONAIS DO SISTEMA (DASHBOARD) --- */
+    /* --- ESTILOS COMPLEMENTARES DO SISTEMA --- */
     .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     
     div[role="radiogroup"] label {
