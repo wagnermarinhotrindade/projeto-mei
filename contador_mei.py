@@ -15,75 +15,23 @@ st.set_page_config(
 # --- SISTEMA DE DESIGN (ANTI-GRAVITY v4.1) ---
 st.markdown("""
 <style>
-    /* --- 1. CONFIGURAÇÃO GERAL --- */
+    /* --- 1. RESET GERAL E FUNDO (ANTI-GRAVITY v4.2) --- */
     .stApp {
         background-color: #0E1117;
     }
-    /* Força todo texto a ser branco para evitar "sumiço" */
-    h1, h2, h3, h4, h5, h6, p, label, .stMarkdown, span {
-        color: #FFFFFF !important;
-    }
-    /* Exceção: Texto dentro de métricas/cards deve respeitar o fundo do card */
-    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
-        color: inherit !important;
-    }
-
-    /* --- 2. HEADER E TOOLBAR (A Mágica do Sumiço) --- */
-    [data-testid="stDecoration"], [data-testid="stToolbar"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    header[data-testid="stHeader"] {
-        background: transparent !important;
-        pointer-events: none !important;
-    }
-
-    /* --- 3. O RESGATE DO MENU (Posição Fixa "Na Marra") --- */
-    [data-testid="stSidebarCollapsedControl"] {
-        display: block !important;
-        visibility: visible !important;
-        position: fixed !important;
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 1000005 !important;
-        background-color: #1E1E1E !important;
-        color: #FFFFFF !important;
-        border: 2px solid #FFFFFF !important;
-        border-radius: 8px !important;
-        padding: 4px !important;
-        width: 45px !important;
-        height: 45px !important;
-        pointer-events: auto !important;
-    }
-    [data-testid="stSidebarCollapsedControl"] svg {
-        fill: #FFFFFF !important;
-        stroke: #FFFFFF !important;
-    }
-
-    /* --- 4. RODAPÉ E ÍCONES CHATOS --- */
-    footer { display: none !important; }
-    #MainMenu { display: none !important; }
-    [data-testid="stStatusWidget"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    .viewerBadge_container__1QSob { display: none !important; }
-
-    /* --- 5. ESTILOS DO SISTEMA (DASHBOARD) --- */
-    .block-container { padding-top: 1rem; padding-bottom: 0rem; }
     
-    [data-testid="stSidebar"] {
-        background-color: #1E1E1E !important;
-    }
-    [data-testid="stSidebar"] * {
-        color: white !important;
+    /* Força textos gerais a serem brancos */
+    h1, h2, h3, h4, h5, h6, p, li, label, .stMarkdown {
+        color: #FFFFFF !important;
     }
 
-    div[role="radiogroup"] label {
-        color: white !important;
-        font-weight: 500;
+    /* --- 2. EXCEÇÃO CRÍTICA: CARDS DE MÉTRICAS --- */
+    /* Garante que os números dentro dos cards brancos sejam PRETOS */
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"] {
+        color: #000000 !important;
     }
-
+    
+    /* Estilos Estruturais do Card */
     .metric-container {
         display: flex;
         gap: 20px;
@@ -113,6 +61,68 @@ st.markdown("""
         font-weight: 700;
     }
 
+    /* --- 3. HEADER FANTASMA (Invisível mas funcional) --- */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        pointer-events: none !important; /* Permite clicar através dele */
+    }
+    /* Esconde barra colorida e botões da direita (Github/Deploy) */
+    [data-testid="stDecoration"], [data-testid="stToolbar"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* --- 4. O RESGATE DO BOTÃO DE MENU (Técnica Fixed Overlay) --- */
+    [data-testid="stSidebarCollapsedControl"] {
+        display: block !important;
+        visibility: visible !important;
+        position: fixed !important; /* Fixa na tela, ignora o header */
+        top: 20px !important;
+        left: 20px !important;
+        z-index: 9999999 !important; /* Acima de tudo */
+        
+        /* Estilo Visual do Botão */
+        background-color: #1E1E1E !important;
+        color: #FFFFFF !important;
+        border: 1px solid #555555 !important;
+        border-radius: 8px !important;
+        padding: 0.5rem !important;
+        width: 45px !important;
+        height: 45px !important;
+        pointer-events: auto !important; /* Garante o clique */
+    }
+    /* Ícone do menu sempre branco */
+    [data-testid="stSidebarCollapsedControl"] svg {
+        fill: #FFFFFF !important;
+        stroke: #FFFFFF !important;
+        width: 25px !important;
+        height: 25px !important;
+    }
+
+    /* --- 5. LIMPEZA TOTAL DE RODAPÉ E BADGES --- */
+    footer {
+        display: none !important;
+    }
+    #MainMenu {
+        display: none !important;
+    }
+    /* Oculta a Coroa/Perfil (Viewer Badge) no canto inferior */
+    div[class^='viewerBadge'] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    /* --- 6. SIDEBAR E COMPONENTES --- */
+    [data-testid="stSidebar"] {
+        background-color: #1E1E1E !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    div[role="radiogroup"] label {
+        color: white !important;
+        font-weight: 500;
+    }
     .sidebar-footer {
         position: fixed;
         bottom: 15px;
