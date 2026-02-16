@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #f65555;
+  --color-background: #0E1117;
+  --radius-xl: 12px;
+  --font-manrope: "Manrope", sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-white font-manrope;
+  }
+}
