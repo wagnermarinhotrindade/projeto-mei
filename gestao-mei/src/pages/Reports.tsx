@@ -8,15 +8,19 @@ import {
     Download,
     MoreVertical,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    FileText
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Reports: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [activityType, setActivityType] = useState('Serviços');
+    const [companyInfo, setCompanyInfo] = useState({ nome_empresa: 'Minha Empresa MEI', nome_completo: '' });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -31,6 +35,21 @@ const Reports: React.FC = () => {
 
             if (error) console.error(error);
             else setTransactions(data || []);
+
+            // Fetch Company Info
+            const { data: profile } = await supabase
+                .from('users_profile')
+                .select('nome_empresa, nome_completo')
+                .eq('id', user.id)
+                .single();
+
+            if (profile) {
+                setCompanyInfo({
+                    nome_empresa: profile.nome_empresa || 'Minha Empresa MEI',
+                    nome_completo: profile.nome_completo || ''
+                });
+            }
+
             setLoading(false);
         };
 
@@ -67,12 +86,94 @@ const Reports: React.FC = () => {
 
         return {
             monthIndex: i,
+            monthName: new Date(selectedYear, i).toLocaleDateString('pt-BR', { month: 'long' }),
             faturamentoBruto,
             servicos,
             comercio,
             hasData: monthTransactions.length > 0
         };
     }).filter(m => m.hasData).reverse();
+
+    const handleGenerateReport = () => {
+        const doc = new jsPDF();
+        const dateStr = new Date().toLocaleDateString('pt-BR');
+
+        // Styles & Colors
+        const primaryColor = [246, 85, 85]; // #f65555
+
+        // Header
+        doc.setFontSize(22);
+        doc.setTextColor(40);
+        doc.text('Relatório Anual de Faturamento MEI', 14, 22);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Ano Base: ${selectedYear}`, 14, 30);
+        doc.text(`Gerado em: ${dateStr}`, 14, 35);
+
+        // Company Info
+        doc.setDrawColor(230);
+        doc.line(14, 40, 196, 40);
+
+        doc.setFontSize(12);
+        doc.setTextColor(40);
+        doc.setFont('helvetica', 'bold');
+        doc.text(companyInfo.nome_empresa, 14, 50);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        doc.text(`Responsável: ${companyInfo.nome_completo || 'Não informado'}`, 14, 56);
+
+        // Summary Box
+        doc.setFillColor(245, 245, 245);
+        doc.roundedRect(14, 65, 182, 30, 3, 3, 'F');
+
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text('FATURAMENTO BRUTO TOTAL DO ANO', 20, 75);
+
+        doc.setFontSize(24);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`R$ ${totalYTD.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 87);
+
+        // Monthly Table
+        const tableBody = monthlySummary
+            .sort((a, b) => a.monthIndex - b.monthIndex) // Order for the official report
+            .map(m => [
+                m.monthName.charAt(0).toUpperCase() + m.monthName.slice(1),
+                `R$ ${m.servicos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                `R$ ${m.comercio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                `R$ ${m.faturamentoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+            ]);
+
+        autoTable(doc, {
+            startY: 105,
+            head: [['Mês', 'Serviços', 'Comércio', 'Total Mensal']],
+            body: tableBody,
+            headStyles: { fillColor: primaryColor as [number, number, number], textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [250, 250, 250] },
+            margin: { left: 14, right: 14 },
+            styles: { fontSize: 9, cellPadding: 5 },
+            columnStyles: {
+                1: { halign: 'right' },
+                2: { halign: 'right' },
+                3: { halign: 'right' }
+            }
+        });
+
+        // Footer / Totals
+        const finalY = (doc as any).lastAutoTable.finalY + 10;
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Este relatório serve como base para a Declaração Anual do Simples Nacional (DASN-SIMEI).', 14, finalY);
+        doc.text('Verifique sempre a consistência dos dados com suas notas fiscais e registros.', 14, finalY + 5);
+
+        // Save
+        doc.save(`Relatorio-DASN-${selectedYear}.pdf`);
+    };
 
     if (loading) {
         return (
@@ -100,8 +201,11 @@ const Reports: React.FC = () => {
                             <option key={year} value={year} className="bg-background text-white">{year} (Jan - Dez)</option>
                         ))}
                     </select>
-                    <button className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-sm font-black shadow-lg shadow-primary/30 hover:-translate-y-1 transition-all">
-                        <FilePlus size={18} />
+                    <button
+                        onClick={handleGenerateReport}
+                        className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-sm font-black shadow-lg shadow-primary/30 hover:-translate-y-1 transition-all"
+                    >
+                        <FileText size={18} />
                         Gerar Relatório DASN
                     </button>
                 </div>

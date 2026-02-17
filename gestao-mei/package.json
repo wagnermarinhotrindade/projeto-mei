@@ -22,6 +22,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
+    "jspdf": "^4.1.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-react": "^0.564.0",
     "react-router-dom": "^7.13.0",
     "recharts": "^3.7.0"
