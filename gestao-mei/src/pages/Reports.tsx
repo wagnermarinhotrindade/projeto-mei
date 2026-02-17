@@ -52,6 +52,28 @@ const Reports: React.FC = () => {
     const limitPercentage = Math.min((totalYTD / limitMEI) * 100, 100);
     const ticketMedio = totalYTD / (filteredTransactions.filter(t => t.tipo.includes('Receita')).length || 1);
 
+    // Lógica de agrupamento mensal real
+    const monthlySummary = Array.from({ length: 12 }, (_, i) => {
+        const monthTransactions = filteredTransactions.filter(t => new Date(t.data).getMonth() === i);
+        const faturamentoBruto = monthTransactions
+            .filter(t => t.tipo.includes('Receita'))
+            .reduce((acc, t) => acc + t.valor, 0);
+        const servicos = monthTransactions
+            .filter(t => t.categoria === 'Prestação de Serviço' && t.tipo.includes('Receita'))
+            .reduce((acc, t) => acc + t.valor, 0);
+        const comercio = monthTransactions
+            .filter(t => t.categoria === 'Venda de Produto' && t.tipo.includes('Receita'))
+            .reduce((acc, t) => acc + t.valor, 0);
+
+        return {
+            monthIndex: i,
+            faturamentoBruto,
+            servicos,
+            comercio,
+            hasData: monthTransactions.length > 0
+        };
+    }).filter(m => m.hasData).reverse();
+
     if (loading) {
         return (
             <div className="h-[60vh] flex items-center justify-center">
@@ -204,22 +226,20 @@ const Reports: React.FC = () => {
                         </thead>
                         <tbody className="divide-y divide-white/[0.03]">
                             {/* Filter only revenue transactions for this specific table as it corresponds to 'Faturamento' */}
-                            {filteredTransactions.filter(t => t.tipo.includes('Receita')).length > 0 ? (
-                                // Grouping by month for this table
-                                // For simplicity of UI demo, showing the last revenue items as months
-                                filteredTransactions.filter(t => t.tipo.includes('Receita')).slice(0, 4).map((t, i) => (
+                            {monthlySummary.length > 0 ? (
+                                monthlySummary.map((m, i) => (
                                     <tr key={i} className="group hover:bg-white/[0.01] transition-all">
-                                        <td className="py-8 pr-4 text-sm font-black whitespace-nowrap">
-                                            {new Date(t.data).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                                        <td className="py-8 pr-4 text-sm font-black whitespace-nowrap capitalize">
+                                            {new Date(selectedYear, m.monthIndex).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
                                         </td>
                                         <td className="py-8 px-4 text-sm font-black tracking-tight">
-                                            R$ {t.valor.toLocaleString('pt-BR')}
+                                            R$ {m.faturamentoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                         </td>
                                         <td className="py-8 px-4">
-                                            <span className="text-[10px] font-bold text-white/40 block">R$ {t.categoria === 'Prestação de Serviço' ? t.valor.toLocaleString('pt-BR') : '0,00'}</span>
+                                            <span className="text-[10px] font-bold text-white/40 block">R$ {m.servicos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                         </td>
                                         <td className="py-8 px-4 text-[10px] font-bold text-white/40">
-                                            R$ {t.categoria === 'Venda de Produto' ? t.valor.toLocaleString('pt-BR') : '0,00'}
+                                            R$ {m.comercio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                         </td>
                                         <td className="py-8 px-4">
                                             <span className="px-3 py-1 bg-green-500/10 text-green-400 text-[9px] font-black uppercase rounded-full border border-green-500/10 tracking-widest">
@@ -236,7 +256,7 @@ const Reports: React.FC = () => {
                             ) : (
                                 <tr>
                                     <td colSpan={6} className="py-12 text-center text-white/20 font-black uppercase tracking-[4px]">
-                                        Aguardando dados...
+                                        Nenhum faturamento registrado para {selectedYear}
                                     </td>
                                 </tr>
                             )}
