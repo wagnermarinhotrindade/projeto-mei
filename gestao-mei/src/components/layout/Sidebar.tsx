@@ -8,11 +8,17 @@ import {
     Settings,
     LogOut,
     Gem,
-    User
+    User,
+    X
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -27,15 +33,26 @@ const Sidebar: React.FC = () => {
     };
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-64 bg-background border-r border-white/5 flex flex-col p-6 z-50">
-            <div className="flex items-center gap-3 mb-10">
-                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group transition-all duration-300 hover:bg-primary hover:text-white border border-primary/20 cursor-pointer">
-                    <Gem size={22} className="group-hover:rotate-12 transition-transform" />
+        <aside className={`fixed left-0 top-0 h-screen w-64 bg-background border-r border-white/5 flex flex-col p-6 z-[env(safe-area-inset-top)] z-[60] transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+            }`}>
+            <div className="flex items-center justify-between gap-3 mb-10">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group transition-all duration-300 hover:bg-primary hover:text-white border border-primary/20 cursor-pointer">
+                        <Gem size={22} className="group-hover:rotate-12 transition-transform" />
+                    </div>
+                    <div>
+                        <h1 className="font-extrabold text-lg leading-tight">Gestão MEI</h1>
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest opacity-80">Profissional</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="font-extrabold text-lg leading-tight">Gestão MEI</h1>
-                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest opacity-80">Profissional</p>
-                </div>
+
+                {/* Close Button Mobile */}
+                <button
+                    onClick={onClose}
+                    className="md:hidden p-2 bg-white/5 border border-white/5 rounded-xl text-white/40 hover:text-white transition-all"
+                >
+                    <X size={18} />
+                </button>
             </div>
 
             <nav className="flex-1 space-y-1">
@@ -43,6 +60,7 @@ const Sidebar: React.FC = () => {
                     <NavLink
                         key={item.path}
                         to={item.path}
+                        onClick={onClose}
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${isActive
                                 ? 'bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/5'
