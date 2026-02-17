@@ -33,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     };
 
     return (
-        <aside className={`fixed left-0 top-0 h-screen w-64 bg-background border-r border-white/5 flex flex-col p-6 z-[env(safe-area-inset-top)] z-[60] transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        <aside className={`fixed left-0 top-0 h-screen w-64 bg-zinc-950 border-r border-white/5 flex flex-col p-6 z-50 transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
             }`}>
             <div className="flex items-center justify-between gap-3 mb-10">
                 <div className="flex items-center gap-3">

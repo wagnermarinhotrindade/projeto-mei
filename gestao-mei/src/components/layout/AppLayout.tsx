@@ -11,7 +11,7 @@ const AppLayout: React.FC = () => {
             {/* Overlay for mobile when sidebar is open */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] md:hidden transition-all duration-300"
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 md:hidden transition-all duration-300"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
