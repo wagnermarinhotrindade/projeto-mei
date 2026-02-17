@@ -5,7 +5,15 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Reports from './pages/Reports';
+import Settings from './pages/Settings';
 import AppLayout from './components/layout/AppLayout';
+
+const Placeholder = ({ title }: { title: string }) => (
+    <div className="flex flex-col items-center justify-center h-[60vh] text-white/20">
+        <h1 className="text-4xl font-black uppercase tracking-[10px]">{title}</h1>
+        <p className="mt-4 font-bold tracking-widest">EM DESENVOLVIMENTO</p>
+    </div>
+);
 
 function App() {
     const [session, setSession] = useState<any>(null);
@@ -24,7 +32,7 @@ function App() {
         return () => subscription.unsubscribe();
     }, []);
 
-    if (loading) return null; // Or a loading spinner
+    if (loading) return null;
 
     return (
         <Router>
@@ -38,6 +46,8 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/transactions" element={<Transactions />} />
                     <Route path="/reports" element={<Reports />} />
+                    <Route path="/clients" element={<Placeholder title="Clientes" />} />
+                    <Route path="/settings" element={<Settings />} />
                 </Route>
 
                 <Route path="/" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
