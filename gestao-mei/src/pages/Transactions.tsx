@@ -202,11 +202,11 @@ const Transactions: React.FC = () => {
 
             {/* NEW TRANSACTION REDESIGN */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto pt-20 pb-10 font-manrope">
+                <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center bg-black/90 backdrop-blur-xl animate-in fade-in duration-300 overflow-y-auto p-4 md:pt-20 md:pb-10 font-manrope">
                     <div className="w-full max-w-4xl relative">
                         {/* Header */}
-                        <div className="flex items-center justify-between mb-10 px-4 md:px-0">
-                            <h2 className="text-3xl font-black tracking-tight text-white">Novo Lançamento</h2>
+                        <div className="flex items-center justify-between mb-6 md:mb-10 px-4 md:px-0 mt-8 md:mt-0">
+                            <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white">Novo Lançamento</h2>
                             <div className="flex items-center gap-4">
                                 <button className="p-4 bg-white/5 rounded-full text-white/40 hover:text-white transition-all border border-white/5">
                                     <Bell size={24} />
@@ -221,13 +221,13 @@ const Transactions: React.FC = () => {
                         </div>
 
                         {/* Main Content Card */}
-                        <div className="bg-white/[0.02] border border-white/5 p-8 md:p-16 rounded-[60px] shadow-2xl relative overflow-hidden">
+                        <div className="bg-white/[0.02] border border-white/5 p-6 md:p-16 rounded-[40px] md:rounded-[60px] shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/5 via-transparent to-transparent opacity-50" />
 
-                            <form onSubmit={handleSave} className="relative z-10 space-y-16">
+                            <form onSubmit={handleSave} className="relative z-10 space-y-10 md:space-y-16">
                                 {/* Type Toggle */}
                                 <div className="flex justify-center">
-                                    <div className="inline-flex p-1.5 bg-black/40 rounded-3xl border border-white/5 min-w-[320px]">
+                                    <div className="flex p-1.5 bg-black/40 rounded-2xl md:rounded-3xl border border-white/5 w-full max-w-[320px]">
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, tipo: 'Receita (Entrou Dinheiro)' })}
@@ -248,7 +248,7 @@ const Transactions: React.FC = () => {
                                 </div>
 
                                 {/* Value Input */}
-                                <div className="text-center group">
+                                <div className="text-center group pt-4 md:pt-0">
                                     <p className="text-[10px] font-black text-white/20 uppercase tracking-[4px] mb-4">VALOR TOTAL</p>
                                     <div className="flex items-center justify-center gap-4 mb-4">
                                         <span className="text-4xl font-black text-white/20">R$</span>
