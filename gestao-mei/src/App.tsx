@@ -8,6 +8,7 @@ import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import AppLayout from './components/layout/AppLayout';
 import LandingPage from './pages/LandingPage';
+import AuthCallback from './pages/AuthCallback';
 
 const Placeholder = ({ title }: { title: string }) => (
     <div className="flex flex-col items-center justify-center h-[60vh] text-white/20">
@@ -43,6 +44,7 @@ function App() {
                     path="/auth"
                     element={!session ? <Login /> : <Navigate to="/dashboard" replace />}
                 />
+                <Route path="/auth/callback" element={<AuthCallback />} />
 
                 <Route element={session ? <AppLayout /> : <Navigate to="/auth" replace />}>
                     <Route path="/dashboard" element={<Dashboard />} />
