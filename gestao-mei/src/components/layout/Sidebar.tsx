@@ -81,7 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                         <User size={24} />
                     </div>
                     <div className="flex-1">
-                        <p className="text-sm font-black text-white/90 leading-none">Ricardo Silva</p>
+                        <p className="text-sm font-black text-white/90 leading-none">Perfil</p>
                         <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">MEI Ativo</p>
                     </div>
                 </div>
