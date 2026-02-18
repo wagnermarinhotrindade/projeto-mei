@@ -90,7 +90,7 @@ const Dashboard: React.FC = () => {
                                     ? 'text-red-500'
                                     : 'text-green-500'
                             }>
-                                {stat.label.includes('Despesa') ? 'Saída de Caixa' : stat.label.includes('Lucro') && stat.raw < 0 ? 'Alerta: Prejuízo' : '+0% vs anterior'}
+                                {stat.label.includes('Despesa') ? 'Saída de Caixa' : stat.label.includes('Lucro') && stat.raw < 0 ? 'Alerta: Prejuízo' : '+0% em relação ao anterior'}
                             </span>
                         </div>
                     </div>

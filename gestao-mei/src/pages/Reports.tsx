@@ -257,7 +257,7 @@ const Reports: React.FC = () => {
                     <div className="flex items-center justify-between mb-8 relative z-10">
                         <div>
                             <span className="px-3 py-1 bg-white/10 text-white/60 text-[8px] font-black uppercase tracking-widest rounded-full border border-white/10">
-                                PREMIUM (FISCAL)
+                                PROFISSIONAL (FISCAL)
                             </span>
                             <h2 className="text-2xl font-black mt-2 leading-none">Simulador IRPF</h2>
                         </div>

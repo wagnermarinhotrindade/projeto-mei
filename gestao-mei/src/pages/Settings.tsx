@@ -49,7 +49,7 @@ const Settings: React.FC = () => {
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
-        navigate('/login');
+        navigate('/auth');
     };
 
     const triggerUpload = () => {

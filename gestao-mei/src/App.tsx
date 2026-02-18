@@ -7,6 +7,7 @@ import Transactions from './pages/Transactions';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import AppLayout from './components/layout/AppLayout';
+import LandingPage from './pages/LandingPage';
 
 const Placeholder = ({ title }: { title: string }) => (
     <div className="flex flex-col items-center justify-center h-[60vh] text-white/20">
@@ -37,20 +38,19 @@ function App() {
     return (
         <Router>
             <Routes>
+                <Route path="/" element={<LandingPage />} />
                 <Route
-                    path="/login"
+                    path="/auth"
                     element={!session ? <Login /> : <Navigate to="/dashboard" replace />}
                 />
 
-                <Route element={session ? <AppLayout /> : <Navigate to="/login" replace />}>
+                <Route element={session ? <AppLayout /> : <Navigate to="/auth" replace />}>
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/transactions" element={<Transactions />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/clients" element={<Placeholder title="Clientes" />} />
                     <Route path="/settings" element={<Settings />} />
                 </Route>
-
-                <Route path="/" element={<Navigate to={session ? "/dashboard" : "/login"} replace />} />
             </Routes>
         </Router>
     );

@@ -7,6 +7,20 @@
   --color-card: #261a1a;
   --radius-xl: 12px;
   --font-manrope: "Manrope", sans-serif;
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  --animate-float: float 4s ease-in-out infinite;
 }
 
 @layer base {
