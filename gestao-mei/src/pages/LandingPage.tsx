@@ -33,6 +33,13 @@ const LandingPage: React.FC = () => {
         }
     };
 
+    const scrollToPricing = () => {
+        const element = document.getElementById('pricing');
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     const faqs = [
         {
             q: "É seguro colocar meus dados?",
@@ -60,12 +67,20 @@ const LandingPage: React.FC = () => {
                         <span className="text-xl font-bold tracking-tight">Gestão<span className="text-primary">MEI</span></span>
                     </Link>
 
-                    <Link
-                        to="/auth"
-                        className="bg-white/5 hover:bg-white/10 text-white px-6 py-2.5 rounded-full font-semibold border border-white/10 transition-all hover:scale-105"
-                    >
-                        Entrar
-                    </Link>
+                    <div className="flex items-center gap-6">
+                        <button
+                            onClick={scrollToPricing}
+                            className="text-white/60 hover:text-white font-bold transition-colors hidden sm:block"
+                        >
+                            Ver Planos
+                        </button>
+                        <Link
+                            to="/auth"
+                            className="bg-white/5 hover:bg-white/10 text-white px-6 py-2.5 rounded-full font-semibold border border-white/10 transition-all hover:scale-105"
+                        >
+                            Entrar
+                        </Link>
+                    </div>
                 </div>
             </header>
 
@@ -94,7 +109,7 @@ const LandingPage: React.FC = () => {
 
                                 <div className="flex flex-col sm:flex-row items-center gap-4 lg:justify-start justify-center">
                                     <button
-                                        onClick={() => navigate('/auth')}
+                                        onClick={scrollToPricing}
                                         className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-10 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-primary/40 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
                                     >
                                         Começar Grátis
@@ -199,7 +214,7 @@ const LandingPage: React.FC = () => {
                 </section>
 
                 {/* Planos e Preços */}
-                <section id="precos" className="py-48 bg-white/[0.01]">
+                <section id="pricing" className="py-48 bg-white/[0.01]">
                     <div className="container mx-auto px-6">
                         <div className="text-center mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
                             <h2 className="text-4xl md:text-6xl font-black mb-6">Escolha o plano ideal para o seu MEI</h2>
