@@ -42,7 +42,7 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route
                     path="/auth"
-                    element={!session ? <Login /> : <Navigate to="/dashboard" replace />}
+                    element={!session ? <Login /> : <Navigate to={`/dashboard${window.location.search}`} replace />}
                 />
                 <Route path="/auth/callback" element={<AuthCallback />} />
 

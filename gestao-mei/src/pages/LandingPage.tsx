@@ -11,16 +11,26 @@ import {
     TrendingDown,
     LayoutGrid
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const LandingPage: React.FC = () => {
     const navigate = useNavigate();
     const [openFaq, setOpenFaq] = useState<number | null>(null);
     const [isAnnual, setIsAnnual] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    React.useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setIsLoggedIn(!!session);
+        });
+    }, []);
 
     const handleSubscription = async (priceId: string) => {
-        // Por enquanto, redireciona para login/registro
-        // No futuro, aqui chamaremos a Edge Function do Supabase para o Stripe Checkout
-        navigate(`/auth?priceId=${priceId}`);
+        if (isLoggedIn) {
+            navigate(`/dashboard?priceId=${priceId}`);
+        } else {
+            navigate(`/auth?priceId=${priceId}`);
+        }
     };
 
     const faqs = [
