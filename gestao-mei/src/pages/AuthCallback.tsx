@@ -10,8 +10,16 @@ const AuthCallback = () => {
         const checkSession = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                // Preserva os query params (como priceId) ao navegar
-                navigate(`/dashboard${window.location.search}`, { replace: true });
+                // Recupera priceId do backup caso o Google tenha limpado a URL
+                const backupPriceId = localStorage.getItem('pendingPriceId');
+                const currentParams = new URLSearchParams(window.location.search);
+
+                if (backupPriceId && !currentParams.has('priceId')) {
+                    currentParams.set('priceId', backupPriceId);
+                }
+
+                const search = currentParams.toString();
+                navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
             }
         };
 
@@ -20,7 +28,15 @@ const AuthCallback = () => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             console.log("Auth Event:", event);
             if (session) {
-                navigate(`/dashboard${window.location.search}`, { replace: true });
+                const backupPriceId = localStorage.getItem('pendingPriceId');
+                const currentParams = new URLSearchParams(window.location.search);
+
+                if (backupPriceId && !currentParams.has('priceId')) {
+                    currentParams.set('priceId', backupPriceId);
+                }
+
+                const search = currentParams.toString();
+                navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
             } else if (event === 'SIGNED_OUT') {
                 navigate('/auth', { replace: true });
             }
@@ -30,7 +46,15 @@ const AuthCallback = () => {
         const timer = setTimeout(async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                navigate(`/dashboard${window.location.search}`, { replace: true });
+                const backupPriceId = localStorage.getItem('pendingPriceId');
+                const currentParams = new URLSearchParams(window.location.search);
+
+                if (backupPriceId && !currentParams.has('priceId')) {
+                    currentParams.set('priceId', backupPriceId);
+                }
+
+                const search = currentParams.toString();
+                navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
             } else {
                 navigate('/auth', { replace: true });
             }

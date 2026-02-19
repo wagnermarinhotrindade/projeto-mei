@@ -8,7 +8,7 @@ const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const priceId = searchParams.get('priceId');
+    const priceId = searchParams.get('priceId') || localStorage.getItem('pendingPriceId');
     const [checkoutLoading, setCheckoutLoading] = useState(false);
 
     const [stats, setStats] = useState([
