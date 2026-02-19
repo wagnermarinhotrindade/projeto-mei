@@ -15,6 +15,13 @@ import {
 const LandingPage: React.FC = () => {
     const navigate = useNavigate();
     const [openFaq, setOpenFaq] = useState<number | null>(null);
+    const [isAnnual, setIsAnnual] = useState(false);
+
+    const handleSubscription = async (priceId: string) => {
+        // Por enquanto, redireciona para login/registro
+        // No futuro, aqui chamaremos a Edge Function do Supabase para o Stripe Checkout
+        navigate(`/auth?priceId=${priceId}`);
+    };
 
     const faqs = [
         {
@@ -177,6 +184,119 @@ const LandingPage: React.FC = () => {
                                     <p className="text-white/60 leading-relaxed font-medium">{benefit.description}</p>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Planos e Preços */}
+                <section id="precos" className="py-48 bg-white/[0.01]">
+                    <div className="container mx-auto px-6">
+                        <div className="text-center mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                            <h2 className="text-4xl md:text-6xl font-black mb-6">Escolha o plano ideal para o seu MEI</h2>
+                            <p className="text-xl text-white/60 max-w-2xl mx-auto font-medium mb-12">
+                                Comece grátis e faça o upgrade conforme seu negócio cresce. Sem pegadinhas.
+                            </p>
+
+                            {/* Toggle Mensal/Anual */}
+                            <div className="flex items-center justify-center gap-4 mb-16">
+                                <span className={`text-sm font-bold ${!isAnnual ? 'text-white' : 'text-white/40'}`}>Mensal</span>
+                                <button
+                                    onClick={() => setIsAnnual(!isAnnual)}
+                                    className="w-16 h-8 bg-white/10 rounded-full relative transition-all border border-white/10"
+                                >
+                                    <div className={`absolute top-1 w-6 h-6 bg-primary rounded-full transition-all shadow-lg shadow-primary/40 ${isAnnual ? 'left-9' : 'left-1'}`} />
+                                </button>
+                                <span className={`text-sm font-bold ${isAnnual ? 'text-white' : 'text-white/40'}`}>Anual <span className="text-green-400 text-[10px] ml-1 uppercase tracking-widest bg-green-400/10 px-2 py-0.5 rounded-full">Economize 15%</span></span>
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                            {/* Plano Básico */}
+                            <div className="p-10 md:p-16 rounded-[40px] bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all flex flex-col relative group overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                                <h3 className="text-2xl font-black mb-2">Plano Básico</h3>
+                                <div className="flex items-baseline gap-1 mb-8">
+                                    <span className="text-5xl font-black">Grátis</span>
+                                </div>
+                                <p className="text-white/40 font-medium mb-10 text-sm">Ideal para quem está começando e quer organizar as primeiras vendas.</p>
+
+                                <ul className="space-y-6 mb-12 flex-1">
+                                    <li className="flex items-center gap-3 text-white/60 font-bold text-sm">
+                                        <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
+                                            <CheckCircle2 size={12} className="text-primary" />
+                                        </div>
+                                        Até 20 lançamentos / mês
+                                    </li>
+                                    <li className="flex items-center gap-3 text-white/60 font-bold text-sm">
+                                        <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
+                                            <CheckCircle2 size={12} className="text-primary" />
+                                        </div>
+                                        Limite de R$ 1.000,00 de movimentação
+                                    </li>
+                                    <li className="flex items-center gap-3 text-white/20 font-bold text-sm line-through decoration-white/20">
+                                        <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                                        </div>
+                                        Relatórios DASN em PDF
+                                    </li>
+                                </ul>
+
+                                <button
+                                    onClick={() => navigate('/auth')}
+                                    className="w-full bg-white/5 hover:bg-white/10 text-white py-5 rounded-2xl font-black text-lg transition-all border border-white/10 active:scale-95"
+                                >
+                                    Começar Grátis
+                                </button>
+                            </div>
+
+                            {/* Plano Pro */}
+                            <div className="p-10 md:p-16 rounded-[40px] bg-gradient-to-br from-primary/20 to-blue-600/10 border-2 border-primary shadow-2xl shadow-primary/20 flex flex-col relative group overflow-hidden">
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
+                                <div className="absolute top-8 right-8 px-4 py-1.5 bg-primary rounded-full text-[10px] font-black uppercase tracking-[2px] text-white">Recomendado</div>
+
+                                <h3 className="text-2xl font-black mb-2">Plano Pro</h3>
+                                <div className="flex items-baseline gap-1 mb-8">
+                                    <span className="text-2xl font-black text-white/40">R$</span>
+                                    <span className="text-6xl font-black tracking-tighter">{isAnnual ? '197,00' : '19,90'}</span>
+                                    <span className="text-white/40 font-bold">{isAnnual ? '/ano' : '/mês'}</span>
+                                </div>
+                                <p className="text-white/60 font-medium mb-10 text-sm">Para o MEI que quer controle total e não quer se preocupar com limites.</p>
+
+                                <ul className="space-y-6 mb-12 flex-1">
+                                    <li className="flex items-center gap-3 text-white/90 font-bold text-sm">
+                                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                            <CheckCircle2 size={12} className="text-white" />
+                                        </div>
+                                        Lançamentos Ilimitados
+                                    </li>
+                                    <li className="flex items-center gap-3 text-white/90 font-bold text-sm">
+                                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                            <CheckCircle2 size={12} className="text-white" />
+                                        </div>
+                                        Relatórios DASN e Financeiros
+                                    </li>
+                                    <li className="flex items-center gap-3 text-white/90 font-bold text-sm">
+                                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                            <CheckCircle2 size={12} className="text-white" />
+                                        </div>
+                                        Controle Ativo de Limite MEI 81k
+                                    </li>
+                                    <li className="flex items-center gap-3 text-white/90 font-bold text-sm">
+                                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                                            <CheckCircle2 size={12} className="text-white" />
+                                        </div>
+                                        Suporte Prioritário
+                                    </li>
+                                </ul>
+
+                                <button
+                                    onClick={() => handleSubscription(isAnnual ? 'price_1T2d6SLjW93jPn5ye6wN7Ptg' : 'price_1T2d6SLjW93jPn5yKFFhiedU')}
+                                    className="w-full bg-primary hover:bg-primary/90 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-primary/40 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
+                                >
+                                    Assinar o Pro
+                                    <Zap size={20} fill="currentColor" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </section>

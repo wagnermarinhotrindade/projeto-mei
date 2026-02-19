@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const Login: React.FC = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -10,6 +10,8 @@ const Login: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const priceId = searchParams.get('priceId');
 
     const handleGoogleLogin = async () => {
         setLoading(true);
@@ -37,9 +39,17 @@ const Login: React.FC = () => {
             if (isLogin) {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                navigate('/dashboard');
+                navigate(priceId ? `/dashboard?priceId=${priceId}` : '/dashboard');
             } else {
-                const { error } = await supabase.auth.signUp({ email, password });
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            pending_plan: priceId
+                        }
+                    }
+                });
                 if (error) throw error;
                 alert('Confirme seu e-mail para ativar a conta!');
             }

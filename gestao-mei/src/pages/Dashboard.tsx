@@ -1,20 +1,59 @@
 import React, { useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown, Wallet, Target, Loader2, ArrowUpRight } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import FinancialChart from '../components/dashboard/FinancialChart';
 import { supabase } from '../lib/supabase';
 
 const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const priceId = searchParams.get('priceId');
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
+
     const [stats, setStats] = useState([
         { label: 'Faturamento Anual', value: 'R$ 0,00', icon: TrendingUp, color: 'text-green-400', raw: 0 },
         { label: 'Despesas Totais', value: 'R$ 0,00', icon: TrendingDown, color: 'text-red-400', raw: 0 },
         { label: 'Lucro Líquido', value: 'R$ 0,00', icon: Wallet, color: 'text-primary', raw: 0 },
     ]);
 
+    const sessionId = searchParams.get('session_id');
+
     useEffect(() => {
         const fetchData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
+
+            // Se retornar do Stripe com sucesso
+            if (sessionId) {
+                // Removemos o parâmetro da URL de forma "silenciosa"
+                navigate('/dashboard', { replace: true });
+                alert('Assinatura confirmada! Seu Plano Pro já está ativo. Aproveite os recursos ilimitados.');
+            }
+
+            // Se houver um priceId na URL, inicia o checkout
+            if (priceId && !checkoutLoading) {
+                setCheckoutLoading(true);
+                try {
+                    const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+                        body: {
+                            priceId: priceId,
+                            userId: user.id,
+                            userEmail: user.email
+                        }
+                    });
+
+                    if (error) throw error;
+                    if (data?.url) {
+                        window.location.href = data.url;
+                        return; // Para o resto do carregamento pois vamos redirecionar
+                    }
+                } catch (err) {
+                    console.error('Erro ao iniciar checkout:', err);
+                    alert('Erro ao iniciar processo de pagamento. Tente novamente em Configurações.');
+                    setCheckoutLoading(false);
+                }
+            }
 
             const { data, error } = await supabase
                 .from('transacoes')
@@ -42,10 +81,13 @@ const Dashboard: React.FC = () => {
 
     const limitPercentage = Math.min(Math.round((stats[0].raw / 81000) * 100), 100);
 
-    if (loading) {
+    if (loading || checkoutLoading) {
         return (
-            <div className="h-[60vh] flex items-center justify-center">
+            <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
                 <Loader2 className="animate-spin text-primary" size={48} />
+                <p className="text-white/40 font-bold animate-pulse">
+                    {checkoutLoading ? 'Preparando seu Checkout Seguro...' : 'Carregando Dashboard...'}
+                </p>
             </div>
         );
     }

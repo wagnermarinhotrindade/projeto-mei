@@ -72,6 +72,40 @@ const Transactions: React.FC = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        // VERIFICAÇÃO DE PLANO E LIMITES
+        const { data: profile } = await supabase
+            .from('users_profile')
+            .select('plano')
+            .eq('id', user.id)
+            .single();
+
+        const isPro = profile?.plano === 'pro';
+
+        if (!isPro) {
+            // Contagem de lançamentos
+            const { count, error: countError } = await supabase
+                .from('transacoes')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', user.id);
+
+            // Soma de valores (Receitas + Despesas)
+            const { data: transacoes, error: sumError } = await supabase
+                .from('transacoes')
+                .select('valor')
+                .eq('user_id', user.id);
+
+            const totalVolume = transacoes?.reduce((acc, t) => acc + t.valor, 0) || 0;
+            const currentVal = parseFloat(formData.valor.replace(',', '.'));
+
+            if (count !== null && count >= 20) {
+                return alert('LIMITE ATINGIDO: O plano gratuito permite apenas 20 lançamentos. Faça o upgrade para o Plano Pro para lançamentos ilimitados!');
+            }
+
+            if (totalVolume + currentVal > 1000) {
+                return alert(`LIMITE ATINGIDO: O plano gratuito permite movimentação de até R$ 1.000,00. Seu volume atual é R$ ${totalVolume.toLocaleString('pt-BR')}. Faça o upgrade para o Plano Pro!`);
+            }
+        }
+
         const val = parseFloat(formData.valor.replace(',', '.'));
         if (isNaN(val)) return alert('Valor inválido');
 
