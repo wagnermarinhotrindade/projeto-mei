@@ -17,6 +17,11 @@ const Login: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
+            // Salva a intenção de compra no localStorage como backup antes do OAuth
+            if (priceId) {
+                localStorage.setItem('pendingPriceId', priceId);
+            }
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -37,11 +42,21 @@ const Login: React.FC = () => {
 
         try {
             if (isLogin) {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                navigate(priceId ? `/dashboard?priceId=${priceId}` : '/dashboard');
+
+                // After successful login, check for pendingPriceId in localStorage
+                const backupPriceId = localStorage.getItem('pendingPriceId');
+                const currentParams = new URLSearchParams(window.location.search);
+
+                if (backupPriceId && !currentParams.has('priceId')) {
+                    currentParams.set('priceId', backupPriceId);
+                }
+
+                const search = currentParams.toString();
+                navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
             } else {
-                const { error } = await supabase.auth.signUp({
+                const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
@@ -52,6 +67,21 @@ const Login: React.FC = () => {
                 });
                 if (error) throw error;
                 alert('Confirme seu e-mail para ativar a conta!');
+
+                // After successful signup, check for pendingPriceId in localStorage
+                const backupPriceId = localStorage.getItem('pendingPriceId');
+                const currentParams = new URLSearchParams(window.location.search);
+
+                if (backupPriceId && !currentParams.has('priceId')) {
+                    currentParams.set('priceId', backupPriceId);
+                }
+
+                const search = currentParams.toString();
+                // If signup is successful, we might want to redirect to dashboard or a confirmation page
+                // For now, let's just alert and keep the user on the login page, or redirect to dashboard if there's a priceId
+                if (search) {
+                    navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
+                }
             }
         } catch (err: any) {
             setError(err.message || 'Erro ao processar autenticação');

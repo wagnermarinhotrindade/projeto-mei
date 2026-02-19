@@ -45,6 +45,7 @@ const Dashboard: React.FC = () => {
 
                     if (error) throw error;
                     if (data?.url) {
+                        localStorage.removeItem('pendingPriceId'); // Limpa o backup após sucesso
                         window.location.href = data.url;
                         return; // Para o resto do carregamento pois vamos redirecionar
                     }
