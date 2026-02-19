@@ -366,7 +366,7 @@ const LandingPage: React.FC = () => {
                                 Comece agora e tenha o controle total do seu negócio em minutos.
                             </p>
                             <button
-                                onClick={() => navigate('/auth')}
+                                onClick={scrollToPricing}
                                 className="group bg-white text-primary hover:bg-white/90 px-12 py-6 rounded-2xl font-black text-2xl shadow-xl transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 mx-auto relative z-10"
                             >
                                 Criar Conta Agora
