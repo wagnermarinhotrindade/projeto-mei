@@ -7,24 +7,34 @@ const AuthCallback = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // O Supabase lida automaticamente com a troca do código pelo token de sessão
-        // Nós apenas monitoramos quando a sessão estiver disponível
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                // Preserva os query params (como priceId) ao navegar
+                navigate(`/dashboard${window.location.search}`, { replace: true });
+            }
+        };
+
+        checkSession();
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session) {
-                navigate('/dashboard');
+            console.log("Auth Event:", event);
+            if (session) {
+                navigate(`/dashboard${window.location.search}`, { replace: true });
+            } else if (event === 'SIGNED_OUT') {
+                navigate('/auth', { replace: true });
             }
         });
 
-        // Timeout de segurança caso algo dê errado
-        const timer = setTimeout(() => {
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                if (session) {
-                    navigate('/dashboard');
-                } else {
-                    navigate('/auth');
-                }
-            });
-        }, 5000);
+        // Timeout de segurança reduzido para 3s e com redirecionamento baseado no estado atual
+        const timer = setTimeout(async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                navigate(`/dashboard${window.location.search}`, { replace: true });
+            } else {
+                navigate('/auth', { replace: true });
+            }
+        }, 3000);
 
         return () => {
             subscription.unsubscribe();
