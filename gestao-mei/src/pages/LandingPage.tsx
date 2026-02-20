@@ -26,6 +26,9 @@ const LandingPage: React.FC = () => {
     }, []);
 
     const handleSubscription = async (priceId: string) => {
+        // Salva a intenção de compra imediatamente no localStorage
+        localStorage.setItem('intentToPurchase', priceId);
+
         if (isLoggedIn) {
             navigate(`/dashboard?priceId=${priceId}`);
         } else {

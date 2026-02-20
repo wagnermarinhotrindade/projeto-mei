@@ -19,7 +19,7 @@ const Login: React.FC = () => {
         try {
             // Salva a intenção de compra no localStorage como backup antes do OAuth
             if (priceId) {
-                localStorage.setItem('pendingPriceId', priceId);
+                localStorage.setItem('intentToPurchase', priceId);
             }
 
             const { error } = await supabase.auth.signInWithOAuth({
@@ -46,7 +46,7 @@ const Login: React.FC = () => {
                 if (error) throw error;
 
                 // After successful login, check for pendingPriceId in localStorage
-                const backupPriceId = localStorage.getItem('pendingPriceId');
+                const backupPriceId = localStorage.getItem('intentToPurchase');
                 const currentParams = new URLSearchParams(window.location.search);
 
                 if (backupPriceId && !currentParams.has('priceId')) {
@@ -69,7 +69,7 @@ const Login: React.FC = () => {
                 alert('Confirme seu e-mail para ativar a conta!');
 
                 // After successful signup, check for pendingPriceId in localStorage
-                const backupPriceId = localStorage.getItem('pendingPriceId');
+                const backupPriceId = localStorage.getItem('intentToPurchase');
                 const currentParams = new URLSearchParams(window.location.search);
 
                 if (backupPriceId && !currentParams.has('priceId')) {

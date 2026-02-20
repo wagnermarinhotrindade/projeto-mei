@@ -8,8 +8,8 @@ const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const priceId = searchParams.get('priceId') || localStorage.getItem('pendingPriceId');
-    const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const priceId = searchParams.get('priceId') || localStorage.getItem('intentToPurchase');
+    const [checkoutLoading, setCheckoutLoading] = useState(!!priceId);
 
     const [stats, setStats] = useState([
         { label: 'Faturamento Anual', value: 'R$ 0,00', icon: TrendingUp, color: 'text-green-400', raw: 0 },
@@ -24,17 +24,13 @@ const Dashboard: React.FC = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Se retornar do Stripe com sucesso
-            if (sessionId) {
-                // Removemos o parâmetro da URL de forma "silenciosa"
-                navigate('/dashboard', { replace: true });
-                alert('Assinatura confirmada! Seu Plano Pro já está ativo. Aproveite os recursos ilimitados.');
-            }
-
-            // Se houver um priceId na URL, inicia o checkout
-            if (priceId && !checkoutLoading) {
+            // Interceptação Agressiva: Se houver intenção de compra, dispara o checkout IMEDIATAMENTE
+            if (priceId && !sessionId) {
                 setCheckoutLoading(true);
                 try {
+                    // Remove do localStorage IMEDIATAMENTE para evitar loops
+                    localStorage.removeItem('intentToPurchase');
+
                     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
                         body: {
                             priceId: priceId,
@@ -45,15 +41,21 @@ const Dashboard: React.FC = () => {
 
                     if (error) throw error;
                     if (data?.url) {
-                        localStorage.removeItem('pendingPriceId'); // Limpa o backup após sucesso
                         window.location.href = data.url;
-                        return; // Para o resto do carregamento pois vamos redirecionar
+                        return; // Para tudo e redireciona
                     }
                 } catch (err) {
                     console.error('Erro ao iniciar checkout:', err);
                     alert('Erro ao iniciar processo de pagamento. Tente novamente em Configurações.');
                     setCheckoutLoading(false);
                 }
+            }
+
+            // Se retornar do Stripe com sucesso
+            if (sessionId) {
+                // Removemos o parâmetro da URL de forma "silenciosa"
+                navigate('/dashboard', { replace: true });
+                alert('Assinatura confirmada! Seu Plano Pro já está ativo. Aproveite os recursos ilimitados.');
             }
 
             const { data, error } = await supabase
