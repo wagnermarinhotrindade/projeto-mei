@@ -29,7 +29,12 @@ const Dashboard: React.FC = () => {
             if (priceId && !sessionId) {
                 setCheckoutLoading(true);
                 const success = await startStripeCheckout(priceId, user.id, user.email || '');
-                if (!success) setCheckoutLoading(false);
+                // Se falhar ou não redirecionar, para o loading para permitir uso do dashboard
+                if (!success) {
+                    setCheckoutLoading(false);
+                    // Limpa o parâmetro da URL para não tentar de novo no refresh
+                    navigate('/dashboard', { replace: true });
+                }
                 return;
             }
 
