@@ -22,21 +22,73 @@ const Placeholder = ({ title }: { title: string }) => (
 function App() {
     const [session, setSession] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setLoading(false);
-        });
+        const checkIntent = async (user: any) => {
+            // REGRA ESTRITA: Captura a intenção no Provider ANTES de liberar rotas
+            const pendingPrice = localStorage.getItem('checkout_price_id');
+            if (pendingPrice && pendingPrice.startsWith('price_') && user) {
+                console.log('Porteiro: Intenção detectada, redirecionando para Stripe...');
+                localStorage.removeItem('checkout_price_id');
+                setIsRedirecting(true);
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
+                try {
+                    await startStripeCheckout(pendingPrice, user.id, user.email || '');
+                } catch (err) {
+                    console.error('Erro no Porteiro (Stripe):', err);
+                    setLoading(false);
+                    setIsRedirecting(false);
+                }
+                return true; // Houve intercepção
+            }
+            return false;
+        };
+
+        const initializeAuth = async () => {
+            const { data: { session: initialSession } } = await supabase.auth.getSession();
+            setSession(initialSession);
+
+            if (initialSession?.user) {
+                const intercepted = await checkIntent(initialSession.user);
+                if (intercepted) return; // Mantém loading/isRedirecting para evitar loop
+            }
+
+            setLoading(false);
+        };
+
+        initializeAuth();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+            setSession(currentSession);
+
+            if (currentSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+                const intercepted = await checkIntent(currentSession.user);
+                if (intercepted) return;
+            }
+
+            if (event === 'SIGNED_OUT') {
+                setLoading(false);
+            }
         });
 
         return () => subscription.unsubscribe();
     }, []);
 
-    if (loading) return null;
+    if (loading || isRedirecting) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center font-manrope">
+                <div className="p-8 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-xl text-center">
+                    <Loader2 className="animate-spin text-primary mx-auto mb-6" size={48} />
+                    <h2 className="text-2xl font-black text-white mb-2">Processando acesso...</h2>
+                    <p className="text-white/60 font-bold">Autenticando e preparando seu ambiente...</p>
+                    <div className="mt-8 w-48 h-1 bg-white/10 rounded-full mx-auto overflow-hidden">
+                        <div className="h-full bg-primary animate-progress shadow-[0_0_10px_rgba(246,85,85,0.5)]" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <Router>

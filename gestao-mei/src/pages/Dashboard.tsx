@@ -9,7 +9,6 @@ const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [checkoutLoading, setCheckoutLoading] = useState(false);
 
     const [stats, setStats] = useState([
         { label: 'Faturamento Anual', value: 'R$ 0,00', icon: TrendingUp, color: 'text-green-400', raw: 0 },
@@ -24,18 +23,6 @@ const Dashboard: React.FC = () => {
             const { data: { user: currentUser } } = await supabase.auth.getUser();
             if (!currentUser) return;
 
-            // PASSO 2: Capturar na Chegada (Estratégia infalível via localStorage)
-            const pendingPrice = localStorage.getItem('checkout_price_id');
-            if (pendingPrice && pendingPrice.startsWith('price_')) {
-                console.log('Resgatando intenção do localStorage:', pendingPrice);
-                localStorage.removeItem('checkout_price_id');
-
-                setCheckoutLoading(true);
-                const success = await startStripeCheckout(pendingPrice, currentUser.id, currentUser.email || '');
-                if (!success) {
-                    setCheckoutLoading(false);
-                }
-            }
 
             // Se retornar do Stripe com sucesso
             if (sessionId) {
@@ -69,32 +56,14 @@ const Dashboard: React.FC = () => {
 
     const limitPercentage = Math.min(Math.round((stats[0].raw / 81000) * 100), 100);
 
-    if (loading || checkoutLoading) {
+    if (loading) {
         return (
             <div className="h-[60vh] flex flex-col items-center justify-center gap-6">
                 <Loader2 className="animate-spin text-primary" size={48} />
                 <div className="text-center">
-                    <p className="text-white font-black text-xl mb-1">
-                        {checkoutLoading ? 'Redirecionando para o pagamento...' : 'Carregando Dashboard...'}
-                    </p>
-                    <p className="text-white/40 text-sm font-medium px-4">
-                        {checkoutLoading
-                            ? 'Preparando seu ambiente de pagamento seguro via Stripe.'
-                            : 'Gerenciando suas ferramentas financeiras...'}
-                    </p>
+                    <p className="text-white font-black text-xl mb-1">Carregando Dashboard...</p>
+                    <p className="text-white/40 text-sm font-medium px-4">Gerenciando suas ferramentas financeiras...</p>
                 </div>
-
-                {checkoutLoading && (
-                    <button
-                        onClick={() => {
-                            setCheckoutLoading(false);
-                            navigate('/dashboard', { replace: true });
-                        }}
-                        className="mt-4 px-6 py-3 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-2xl border border-white/10 transition-all font-bold text-sm"
-                    >
-                        Cancelar e Voltar ao Dashboard
-                    </button>
-                )}
             </div>
         );
     }
