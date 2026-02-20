@@ -17,17 +17,16 @@ const Login: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            // CAPTURA INTENÇÃO E PREPARA REDIRECIONAMENTO COM PARÂMETRO (Passagem 1 de 2)
-            const currentPriceId = searchParams.get('priceId');
-            const redirectUrl = currentPriceId
-                ? `${window.location.origin}/dashboard?checkoutPrice=${currentPriceId}`
-                : `${window.location.origin}/dashboard`;
+            const priceId = searchParams.get('priceId');
+            const redirectUrl = priceId
+                ? `${window.location.origin}/auth/callback?priceId=${priceId}`
+                : `${window.location.origin}/auth/callback`;
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: redirectUrl,
-                },
+                    redirectTo: redirectUrl
+                }
             });
             if (error) throw error;
         } catch (err: any) {

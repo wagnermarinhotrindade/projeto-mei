@@ -25,36 +25,7 @@ const Dashboard: React.FC = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // INTERCEPTAÇÃO DE INTENÇÃO VIA URL (Passagem 2 de 2 - 100% à prova de falhas)
-            const queryParams = new URLSearchParams(window.location.search);
-            const checkoutPrice = queryParams.get('checkoutPrice');
-
-            if (checkoutPrice && checkoutPrice.startsWith('price_')) {
-                console.log('Intenção via URL detectada:', checkoutPrice);
-
-                // Limpa a URL IMEDIATAMENTE para evitar loops em F5 ou navegação
-                window.history.replaceState({}, document.title, window.location.pathname);
-
-                setCheckoutLoading(true);
-                const success = await startStripeCheckout(checkoutPrice, user.id, user.email || '');
-                if (!success) {
-                    setCheckoutLoading(false);
-                }
-                return;
-            }
-
-            // Fallback para intenções diretas na URL (pre-existente)
-            if (priceId && priceId !== 'free' && !sessionId && !checkoutPrice) {
-                setCheckoutLoading(true);
-                const success = await startStripeCheckout(priceId, user.id, user.email || '');
-                if (!success) {
-                    setCheckoutLoading(false);
-                    navigate('/dashboard', { replace: true });
-                }
-                return;
-            }
-
-            // Se for intenção 'free', apenas limpa a URL
+            // Se for intenção 'free', apenas limpa a URL (Tratado localmente por ser informativo)
             if (priceId === 'free') {
                 navigate('/dashboard', { replace: true });
             }
