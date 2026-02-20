@@ -13,16 +13,18 @@ const AuthCallback = () => {
             if (session) {
                 const intent = localStorage.getItem('intentToPurchase') || localStorage.getItem('pendingPriceId');
 
-                if (intent) {
-                    localStorage.removeItem('intentToPurchase');
-                    localStorage.removeItem('pendingPriceId');
+                // Limpa IMEDIATAMENTE para evitar re-execução por eventos duplicados
+                localStorage.removeItem('intentToPurchase');
+                localStorage.removeItem('pendingPriceId');
+
+                if (intent && intent !== 'free') {
+                    // SE TIVER INTENÇÃO PRO, DISPARA STRIPE AGORA
                     const success = await startStripeCheckout(intent, session.user.id, session.user.email || '');
-                    if (success) return;
+                    if (success) return; // Aborta qualquer outro redirecionamento
                 }
 
-                const currentParams = new URLSearchParams(window.location.search);
-                const search = currentParams.toString();
-                navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
+                // Se for 'free' ou sem intenção, vai para o dashboard
+                navigate('/dashboard', { replace: true });
             }
         };
 
