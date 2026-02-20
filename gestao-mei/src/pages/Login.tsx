@@ -11,6 +11,8 @@ const Login: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const priceId = searchParams.get('priceId');
+
     React.useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
