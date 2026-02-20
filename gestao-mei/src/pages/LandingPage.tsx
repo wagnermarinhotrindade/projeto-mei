@@ -112,7 +112,7 @@ const LandingPage: React.FC = () => {
 
                                 <div className="flex flex-col sm:flex-row items-center gap-4 lg:justify-start justify-center">
                                     <button
-                                        onClick={() => handleSubscription('free')}
+                                        onClick={scrollToPricing}
                                         className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-10 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-primary/40 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
                                     >
                                         Começar Grátis
