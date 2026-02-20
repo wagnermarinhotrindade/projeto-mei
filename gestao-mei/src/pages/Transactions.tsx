@@ -46,7 +46,8 @@ const Transactions: React.FC = () => {
         if (!user) return;
         setCheckoutLoading(true);
         try {
-            const success = await startStripeCheckout('price_1T2cFGLjW93jPn5yJDSCAKev', user.id, user.email || '');
+            // Price ID do Plano Anual (R$ 197)
+            const success = await startStripeCheckout('price_1T2d6SLjW93jPn5ye6wN7Ptg', user.id, user.email || '');
             if (!success) {
                 setCheckoutLoading(false);
             }
@@ -408,8 +409,8 @@ const Transactions: React.FC = () => {
                         </div>
 
                         <h2 className="text-3xl font-black mb-4">Limite Atingido!</h2>
-                        <p className="text-white/60 font-medium mb-10 leading-relaxed">
-                            {limitReason} 🚀 <span className="text-white">Desbloqueie agora</span> para ter acesso ilimitado e profissionalizar seu MEI.
+                        <p className="text-white/60 font-medium mb-10 leading-relaxed text-sm">
+                            {limitReason} 🚀 <span className="text-white">Desbloqueie o Gestão MEI por 1 ano</span> e profissionalize seu negócio com lançamentos ilimitados, relatórios DASN e suporte prioritário por apenas <span className="text-white font-bold text-lg block mt-2">R$ 197,00</span>
                         </p>
 
                         <div className="space-y-4">
@@ -418,14 +419,14 @@ const Transactions: React.FC = () => {
                                 disabled={checkoutLoading}
                                 className="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95 text-lg uppercase tracking-widest flex items-center justify-center gap-2"
                             >
-                                {checkoutLoading ? <Loader2 className="animate-spin" size={20} /> : 'Desbloquear Pro'}
+                                {checkoutLoading ? <Loader2 className="animate-spin" size={20} /> : 'Assinar Anual (R$ 197)'}
                             </button>
                             <button
                                 onClick={() => setIsLimitModalOpen(false)}
                                 disabled={checkoutLoading}
                                 className="w-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white py-5 rounded-2xl font-bold transition-all text-sm"
                             >
-                                Continuar no Plano Free
+                                Agora não
                             </button>
                         </div>
                     </div>

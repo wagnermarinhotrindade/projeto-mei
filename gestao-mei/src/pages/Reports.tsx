@@ -16,19 +16,23 @@ import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+import { startStripeCheckout } from '../lib/stripe';
+
 const Reports: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [activityType, setActivityType] = useState('Serviços');
     const [companyInfo, setCompanyInfo] = useState({ nome_empresa: 'Minha Empresa MEI', nome_completo: '' });
-
     const [userPlan, setUserPlan] = useState('gratis');
+    const [user, setUser] = useState<any>(null);
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
+            setUser(user);
 
             // Fetch Plan Status
             const { data: profile } = await supabase
@@ -59,6 +63,21 @@ const Reports: React.FC = () => {
 
         fetchData();
     }, []);
+
+    const handleUpgrade = async () => {
+        if (!user) return;
+        setCheckoutLoading(true);
+        try {
+            // Price ID do Plano Anual (R$ 197)
+            const success = await startStripeCheckout('price_1T2d6SLjW93jPn5ye6wN7Ptg', user.id, user.email || '');
+            if (!success) {
+                setCheckoutLoading(false);
+            }
+        } catch (error) {
+            setCheckoutLoading(false);
+            console.error('Erro no checkout:', error);
+        }
+    };
 
     const isPro = userPlan === 'pro';
     const filteredTransactions = transactions.filter(t => new Date(t.data).getFullYear() === selectedYear);
@@ -198,26 +217,28 @@ const Reports: React.FC = () => {
             {!isPro && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center px-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-[40px]" />
-                    <div className="relative bg-[#1a1a1a] border border-primary/30 p-10 md:p-16 rounded-[40px] shadow-2xl shadow-primary/20 text-center max-w-2xl animate-in zoom-in-95 duration-500">
-                        <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center text-primary mx-auto mb-8 border border-primary/20">
-                            <Zap size={40} fill="currentColor" />
+                    <div className="relative bg-[#1a1a1a] border border-primary/30 p-10 md:p-16 rounded-[40px] shadow-2xl shadow-primary/20 text-center max-w-2xl animate-in zoom-in-95 duration-500 group">
+                        <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center text-primary mx-auto mb-8 border border-primary/20 group-hover:scale-110 transition-transform">
+                            {checkoutLoading ? <Loader2 className="animate-spin" size={40} /> : <Zap size={40} fill="currentColor" />}
                         </div>
-                        <h2 className="text-3xl md:text-4xl font-black mb-6">Relatórios são exclusivos do <span className="text-primary">Plano Pro</span></h2>
+                        <h2 className="text-3xl md:text-4xl font-black mb-6">Desbloqueie o Gestão MEI por 1 ano!</h2>
                         <p className="text-lg text-white/60 mb-10 leading-relaxed">
-                            Organize seu MEI como um profissional. Assine o Plano Pro para emitir relatórios DASN em PDF, ter lançamentos ilimitados e suporte prioritário.
+                            Organize seu MEI como um profissional o ano inteiro. Assine o <span className="text-white font-bold">Plano Pro Anual por R$ 197,00</span> e tenha relatórios DASN em PDF, lançamentos ilimitados, controle do limite de 81k e suporte prioritário.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                             <button
-                                onClick={() => window.location.href = '/#precos'}
-                                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:-translate-y-1 shadow-xl shadow-primary/30"
+                                onClick={handleUpgrade}
+                                disabled={checkoutLoading}
+                                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:-translate-y-1 shadow-xl shadow-primary/30 flex items-center justify-center gap-2"
                             >
-                                Ver Planos e Preços
+                                {checkoutLoading ? <Loader2 className="animate-spin" size={24} /> : 'Assinar Anual (R$ 197)'}
                             </button>
                             <button
                                 onClick={() => window.location.href = '/dashboard'}
+                                disabled={checkoutLoading}
                                 className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all"
                             >
-                                Voltar ao Dashboard
+                                Agora não
                             </button>
                         </div>
                     </div>
