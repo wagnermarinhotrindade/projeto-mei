@@ -9,7 +9,6 @@ const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const priceId = searchParams.get('priceId');
     const [checkoutLoading, setCheckoutLoading] = useState(false);
 
     const [stats, setStats] = useState([
@@ -22,17 +21,24 @@ const Dashboard: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+            if (!currentUser) return;
 
-            // Se for intenção 'free', apenas limpa a URL (Tratado localmente por ser informativo)
-            if (priceId === 'free') {
-                navigate('/dashboard', { replace: true });
+            // PASSO 2: Capturar na Chegada (Estratégia infalível via localStorage)
+            const pendingPrice = localStorage.getItem('checkout_price_id');
+            if (pendingPrice && pendingPrice.startsWith('price_')) {
+                console.log('Resgatando intenção do localStorage:', pendingPrice);
+                localStorage.removeItem('checkout_price_id');
+
+                setCheckoutLoading(true);
+                const success = await startStripeCheckout(pendingPrice, currentUser.id, currentUser.email || '');
+                if (!success) {
+                    setCheckoutLoading(false);
+                }
             }
 
             // Se retornar do Stripe com sucesso
             if (sessionId) {
-                // Removemos o parâmetro da URL de forma "silenciosa"
                 navigate('/dashboard', { replace: true });
                 alert('Assinatura confirmada! Seu Plano Pro já está ativo. Aproveite os recursos ilimitados.');
             }
@@ -40,7 +46,7 @@ const Dashboard: React.FC = () => {
             const { data, error } = await supabase
                 .from('transacoes')
                 .select('*')
-                .eq('user_id', user.id);
+                .eq('user_id', currentUser.id);
 
             if (error) {
                 console.error(error);
@@ -59,7 +65,7 @@ const Dashboard: React.FC = () => {
         };
 
         fetchData();
-    }, []);
+    }, [sessionId, navigate]);
 
     const limitPercentage = Math.min(Math.round((stats[0].raw / 81000) * 100), 100);
 
@@ -94,120 +100,113 @@ const Dashboard: React.FC = () => {
     }
 
     return (
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-center justify-between">
+        <div className="space-y-8 animate-in fade-in duration-500">
+            {/* Header com Saudação */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-4xl font-black tracking-tight">Raio-X da Empresa</h1>
-                    <p className="text-white/40 mt-1 font-medium">Gestão inteligente para o seu negócio.</p>
+                    <h1 className="text-3xl font-black text-white tracking-tight">Painel de Controle</h1>
+                    <p className="text-white/40 font-bold mt-1">Acompanhe a saúde financeira do seu MEI em tempo real.</p>
                 </div>
-                <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/40">
-                    Status: Operacional
+                <div className="flex items-center gap-3">
+                    <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm">
+                        <p className="text-[10px] uppercase tracking-widest font-black text-white/30 mb-0.5">Ano Fiscal</p>
+                        <p className="text-white font-black">2024</p>
+                    </div>
                 </div>
             </div>
 
+            {/* Grid de Cards de Estatísticas */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {stats.map((stat, i) => (
-                    <div
-                        key={i}
-                        className="bg-white/[0.03] border border-white/5 p-8 rounded-[32px] hover:bg-white/[0.05] transition-all group relative overflow-hidden"
-                    >
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-white/5 to-transparent rounded-bl-full" />
-                        <div className="flex items-center justify-between mb-6">
-                            <span className="text-[10px] font-black text-white uppercase tracking-[2px]">{stat.label}</span>
-                            <div className={`p-2 rounded-xl bg-white/5 ${stat.color}`}>
-                                <stat.icon size={20} />
+                {stats.map((stat, index) => (
+                    <div key={index} className="group relative bg-white/5 border border-white/10 p-6 rounded-3xl overflow-hidden hover:bg-white/[0.07] transition-all hover:border-white/20">
+                        <div className="relative z-10">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className={`p-3 bg-white/5 rounded-2xl ${stat.color} group-hover:scale-110 transition-transform`}>
+                                    <stat.icon size={24} />
+                                </div>
+                                <div className="flex items-center gap-1 px-2 py-1 bg-green-400/10 rounded-lg">
+                                    <ArrowUpRight size={12} className="text-green-400" />
+                                    <span className="text-[10px] font-black text-green-400">ATIVO</span>
+                                </div>
                             </div>
+                            <p className="text-white/40 text-sm font-bold mb-1 uppercase tracking-wider">{stat.label}</p>
+                            <h3 className="text-3xl font-black text-white tracking-tight">{stat.value}</h3>
                         </div>
-                        <div className="text-3xl font-black tracking-tighter mb-2 text-white">{stat.value}</div>
-                        <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-tight">
-                            <ArrowUpRight
-                                size={12}
-                                className={
-                                    stat.label.includes('Despesa') || (stat.label.includes('Lucro') && stat.raw < 0)
-                                        ? 'text-red-500'
-                                        : 'text-green-500'
-                                }
-                            />
-                            <span className={
-                                stat.label.includes('Despesa') || (stat.label.includes('Lucro') && stat.raw < 0)
-                                    ? 'text-red-500'
-                                    : 'text-green-500'
-                            }>
-                                {stat.label.includes('Despesa') ? 'Saída de Caixa' : stat.label.includes('Lucro') && stat.raw < 0 ? 'Alerta: Prejuízo' : '+0% em relação ao anterior'}
-                            </span>
-                        </div>
+                        {/* Efeito de Gradiente no Fundo */}
+                        <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-primary/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white/[0.03] border border-white/5 p-10 rounded-[40px] flex flex-col min-h-[450px]">
-                    <div className="flex items-center justify-between mb-10">
-                        <h2 className="text-2xl font-black tracking-tight">Evolução de Caixa</h2>
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-primary" />
-                                <span className="text-[10px] font-black text-white/40 uppercase">Receitas</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-white/20" />
-                                <span className="text-[10px] font-black text-white/40 uppercase">Despesas</span>
-                            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Gráfico de Evolução Financeira */}
+                <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-8">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-xl font-black text-white">Evolução de Caixa</h3>
+                            <p className="text-white/40 text-sm font-bold">Fluxo de caixa dos últimos 6 meses</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <span className="flex items-center gap-2 text-xs font-bold text-white/40">
+                                <span className="w-2 h-2 rounded-full bg-green-400"></span> Receitas
+                            </span>
+                            <span className="flex items-center gap-2 text-xs font-bold text-white/40">
+                                <span className="w-2 h-2 rounded-full bg-red-400"></span> Despesas
+                            </span>
                         </div>
                     </div>
-                    <div className="flex-1 w-full">
+                    <div className="h-[350px] w-full">
                         <FinancialChart />
                     </div>
                 </div>
 
-                <div className="bg-white/[0.03] border border-white/5 p-10 rounded-[40px] flex flex-col items-center justify-center text-center relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                {/* Card de Monitoramento de Limite */}
+                <div className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col relative overflow-hidden group">
+                    <div className="relative z-10 flex flex-col h-full">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                                <Target size={24} />
+                            </div>
+                            <h3 className="text-xl font-black text-white">Limite MEI</h3>
+                        </div>
 
-                    <div className="w-48 h-48 relative mb-8">
-                        <svg className="w-full h-full transform -rotate-90">
-                            <circle
-                                cx="96"
-                                cy="96"
-                                r="80"
-                                fill="transparent"
-                                stroke="currentColor"
-                                strokeWidth="16"
-                                className="text-white/5"
-                            />
-                            <circle
-                                cx="96"
-                                cy="96"
-                                r="80"
-                                fill="transparent"
-                                stroke="currentColor"
-                                strokeWidth="16"
-                                strokeDasharray={502.6}
-                                strokeDashoffset={502.6 - (502.6 * limitPercentage) / 100}
-                                className="text-primary transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(246,85,85,0.4)]"
-                                strokeLinecap="round"
-                            />
-                        </svg>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-4xl font-black tracking-tighter">{limitPercentage}%</span>
-                            <span className="text-[10px] text-white/30 font-black uppercase tracking-widest mt-1">Limite MEI</span>
+                        <div className="space-y-6 flex-grow">
+                            <div>
+                                <div className="flex justify-between items-end mb-3">
+                                    <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Progresso</p>
+                                    <p className="text-2xl font-black text-white">{limitPercentage}%</p>
+                                </div>
+                                <div className="h-4 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-primary to-[#ff8585] transition-all duration-1000 shadow-[0_0_15px_rgba(246,85,85,0.3)]"
+                                        style={{ width: `${limitPercentage}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <span className="text-white/40 font-bold text-sm">Faturamento Atual</span>
+                                    <span className="text-white font-black">{stats[0].value}</span>
+                                </div>
+                                <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                    <span className="text-white/40 font-bold text-sm">Limite Disponível</span>
+                                    <span className="text-white font-black">
+                                        R$ {(81000 - stats[0].raw).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20">
+                                <p className="text-primary text-xs font-black leading-relaxed">
+                                    DICA: Mantenha seu faturamento abaixo de R$ 81.000,00 anuais para permanecer no regime MEI.
+                                </p>
+                            </div>
                         </div>
                     </div>
-
-                    <h3 className="text-xl font-black mb-3">Teto Faturamento</h3>
-                    <p className="text-xs text-white/40 leading-relaxed max-w-[200px] mb-8 font-medium">
-                        Você atingiu <span className="text-white/80 font-black">{stats[0].value}</span> dos R$ 81.000,00 anuais permitidos.
-                    </p>
-
-                    <div className="w-full bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center gap-4 text-left">
-                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary border border-primary/20">
-                            <Target size={20} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-[2px] mb-0.5">ESTRATÉGIA</p>
-                            <p className="text-[11px] font-bold text-white/50 leading-tight">
-                                {limitPercentage < 80 ? 'Otimize seus impostos para crescer.' : 'Considere migrar para ME em breve.'}
-                            </p>
-                        </div>
+                    {/* Background Pattern */}
+                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                        <Target size={120} />
                     </div>
                 </div>
             </div>

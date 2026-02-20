@@ -18,14 +18,17 @@ const Login: React.FC = () => {
         setError(null);
         try {
             const priceId = searchParams.get('priceId');
-            const redirectUrl = priceId
-                ? `${window.location.origin}/auth/callback?priceId=${priceId}`
-                : `${window.location.origin}/auth/callback`;
+
+            // PASSO 1: Salvar a intenção localmente antes de sair para o OAuth
+            if (priceId && priceId.startsWith('price_')) {
+                console.log('Salvando intenção de compra no localStorage:', priceId);
+                localStorage.setItem('checkout_price_id', priceId);
+            }
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: redirectUrl
+                    redirectTo: `${window.location.origin}/dashboard`
                 }
             });
             if (error) throw error;
