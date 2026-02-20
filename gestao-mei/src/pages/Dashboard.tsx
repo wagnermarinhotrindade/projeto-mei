@@ -73,11 +73,28 @@ const Dashboard: React.FC = () => {
 
     if (loading || checkoutLoading) {
         return (
-            <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
+            <div className="h-[60vh] flex flex-col items-center justify-center gap-6">
                 <Loader2 className="animate-spin text-primary" size={48} />
-                <p className="text-white/40 font-bold animate-pulse">
-                    {checkoutLoading ? 'Preparando seu Checkout Seguro...' : 'Carregando Dashboard...'}
-                </p>
+                <div className="text-center">
+                    <p className="text-white font-black text-xl mb-1">
+                        {checkoutLoading ? 'Preparando seu Checkout Seguro...' : 'Carregando Dashboard...'}
+                    </p>
+                    <p className="text-white/40 text-sm font-medium px-4">
+                        Isso pode levar alguns segundos enquanto conectamos com a Stripe.
+                    </p>
+                </div>
+
+                {checkoutLoading && (
+                    <button
+                        onClick={() => {
+                            setCheckoutLoading(false);
+                            navigate('/dashboard', { replace: true });
+                        }}
+                        className="mt-4 px-6 py-3 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-2xl border border-white/10 transition-all font-bold text-sm"
+                    >
+                        Cancelar e Voltar ao Dashboard
+                    </button>
+                )}
             </div>
         );
     }
