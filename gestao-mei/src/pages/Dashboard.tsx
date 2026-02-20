@@ -3,13 +3,14 @@ import { TrendingUp, TrendingDown, Wallet, Target, Loader2, ArrowUpRight } from 
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import FinancialChart from '../components/dashboard/FinancialChart';
 import { supabase } from '../lib/supabase';
+import { startStripeCheckout } from '../lib/stripe';
 
 const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const priceId = searchParams.get('priceId') || localStorage.getItem('intentToPurchase');
-    const [checkoutLoading, setCheckoutLoading] = useState(!!priceId);
+    const priceId = searchParams.get('priceId');
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
 
     const [stats, setStats] = useState([
         { label: 'Faturamento Anual', value: 'R$ 0,00', icon: TrendingUp, color: 'text-green-400', raw: 0 },
@@ -24,31 +25,12 @@ const Dashboard: React.FC = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Interceptação Agressiva: Se houver intenção de compra, dispara o checkout IMEDIATAMENTE
+            // Interceptação Agressiva: Se houver intent na URL (vindo de cliques diretos já logado)
             if (priceId && !sessionId) {
                 setCheckoutLoading(true);
-                try {
-                    // Remove do localStorage IMEDIATAMENTE para evitar loops
-                    localStorage.removeItem('intentToPurchase');
-
-                    const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-                        body: {
-                            priceId: priceId,
-                            userId: user.id,
-                            userEmail: user.email
-                        }
-                    });
-
-                    if (error) throw error;
-                    if (data?.url) {
-                        window.location.href = data.url;
-                        return; // Para tudo e redireciona
-                    }
-                } catch (err) {
-                    console.error('Erro ao iniciar checkout:', err);
-                    alert('Erro ao iniciar processo de pagamento. Tente novamente em Configurações.');
-                    setCheckoutLoading(false);
-                }
+                const success = await startStripeCheckout(priceId, user.id, user.email || '');
+                if (!success) setCheckoutLoading(false);
+                return;
             }
 
             // Se retornar do Stripe com sucesso

@@ -2,68 +2,41 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Loader2 } from 'lucide-react';
+import { startStripeCheckout } from '../lib/stripe';
 
 const AuthCallback = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const checkSession = async () => {
+        const handleAuth = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                // Recupera priceId do backup caso o Google tenha limpado a URL
-                const backupPriceId = localStorage.getItem('pendingPriceId');
-                const currentParams = new URLSearchParams(window.location.search);
+                const intent = localStorage.getItem('intentToPurchase') || localStorage.getItem('pendingPriceId');
 
-                if (backupPriceId && !currentParams.has('priceId')) {
-                    currentParams.set('priceId', backupPriceId);
+                if (intent) {
+                    localStorage.removeItem('intentToPurchase');
+                    localStorage.removeItem('pendingPriceId');
+                    const success = await startStripeCheckout(intent, session.user.id, session.user.email || '');
+                    if (success) return;
                 }
 
+                const currentParams = new URLSearchParams(window.location.search);
                 const search = currentParams.toString();
                 navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
             }
         };
 
-        checkSession();
+        handleAuth();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            console.log("Auth Event:", event);
-            if (session) {
-                const backupPriceId = localStorage.getItem('pendingPriceId');
-                const currentParams = new URLSearchParams(window.location.search);
-
-                if (backupPriceId && !currentParams.has('priceId')) {
-                    currentParams.set('priceId', backupPriceId);
-                }
-
-                const search = currentParams.toString();
-                navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
+            if (session && event === 'SIGNED_IN') {
+                handleAuth();
             } else if (event === 'SIGNED_OUT') {
                 navigate('/auth', { replace: true });
             }
         });
 
-        // Timeout de segurança reduzido para 3s e com redirecionamento baseado no estado atual
-        const timer = setTimeout(async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                const backupPriceId = localStorage.getItem('pendingPriceId');
-                const currentParams = new URLSearchParams(window.location.search);
-
-                if (backupPriceId && !currentParams.has('priceId')) {
-                    currentParams.set('priceId', backupPriceId);
-                }
-
-                const search = currentParams.toString();
-                navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
-            } else {
-                navigate('/auth', { replace: true });
-            }
-        }, 3000);
-
-        return () => {
-            subscription.unsubscribe();
-            clearTimeout(timer);
-        };
+        return () => subscription.unsubscribe();
     }, [navigate]);
 
     return (

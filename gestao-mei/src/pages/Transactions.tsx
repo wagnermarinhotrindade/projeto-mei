@@ -24,6 +24,7 @@ import {
     TrendingDown
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { startStripeCheckout } from '../lib/stripe';
 
 const Transactions: React.FC = () => {
     const [data, setData] = useState<any[]>([]);
@@ -36,6 +37,9 @@ const Transactions: React.FC = () => {
         descricao: '',
         data: new Date().toISOString().split('T')[0]
     });
+    const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+    const [limitReason, setLimitReason] = useState('');
+    const [user, setUser] = useState<any>(null);
 
     const categories = [
         { id: 'Venda de Produto', label: 'Vendas', icon: ShoppingBasket },
@@ -51,6 +55,7 @@ const Transactions: React.FC = () => {
     const fetchData = async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        setUser(user);
 
         const { data, error } = await supabase
             .from('transacoes')
@@ -98,11 +103,15 @@ const Transactions: React.FC = () => {
             const currentVal = parseFloat(formData.valor.replace(',', '.'));
 
             if (count !== null && count >= 20) {
-                return alert('LIMITE ATINGIDO: O plano gratuito permite apenas 20 lançamentos. Faça o upgrade para o Plano Pro para lançamentos ilimitados!');
+                setLimitReason('Você atingiu o limite de 20 lançamentos do seu plano gratuito.');
+                setIsLimitModalOpen(true);
+                return;
             }
 
             if (totalVolume + currentVal > 1000) {
-                return alert(`LIMITE ATINGIDO: O plano gratuito permite movimentação de até R$ 1.000,00. Seu volume atual é R$ ${totalVolume.toLocaleString('pt-BR')}. Faça o upgrade para o Plano Pro!`);
+                setLimitReason(`O plano gratuito permite movimentação de até R$ 1.000,00. Seu volume atual já é R$ ${totalVolume.toLocaleString('pt-BR')}.`);
+                setIsLimitModalOpen(true);
+                return;
             }
         }
 
@@ -368,6 +377,38 @@ const Transactions: React.FC = () => {
                                     </div>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* LIMIT REACHED MODAL */}
+            {isLimitModalOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 font-manrope">
+                    <div className="w-full max-w-md bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-[40px] p-10 text-center shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+
+                        <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center text-primary mx-auto mb-8 border border-primary/20 group-hover:scale-110 transition-transform">
+                            <Zap size={40} fill="currentColor" />
+                        </div>
+
+                        <h2 className="text-3xl font-black mb-4">Limite Atingido!</h2>
+                        <p className="text-white/60 font-medium mb-10 leading-relaxed">
+                            {limitReason} 🚀 <span className="text-white">Desbloqueie agora</span> para ter acesso ilimitado e profissionalizar seu MEI.
+                        </p>
+
+                        <div className="space-y-4">
+                            <button
+                                onClick={() => user && startStripeCheckout('price_1T2d6SLjW93jPn5yKFFhiedU', user.id, user.email || '')}
+                                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95 text-lg uppercase tracking-widest"
+                            >
+                                Desbloquear Pro
+                            </button>
+                            <button
+                                onClick={() => setIsLimitModalOpen(false)}
+                                className="w-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white py-5 rounded-2xl font-bold transition-all text-sm"
+                            >
+                                Continuar no Plano Free
+                            </button>
                         </div>
                     </div>
                 </div>

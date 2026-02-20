@@ -1,10 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, Zap } from 'lucide-react';
 import Sidebar from './Sidebar';
+import { supabase } from '../../lib/supabase';
+import { startStripeCheckout } from '../../lib/stripe';
 
 const AppLayout: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isPro, setIsPro] = useState(true); // Default to true to avoid flash
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const checkPlan = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            setUser(user);
+
+            const { data: profile } = await supabase
+                .from('users_profile')
+                .select('plano')
+                .eq('id', user.id)
+                .single();
+
+            setIsPro(profile?.plano === 'pro');
+        };
+        checkPlan();
+    }, []);
+
+    const handleUpgrade = () => {
+        if (user) {
+            startStripeCheckout('price_1T2d6SLjW93jPn5yKFFhiedU', user.id, user.email || '');
+        }
+    };
 
     return (
         <div className="min-h-screen bg-background text-white relative flex overflow-x-hidden">
@@ -32,6 +59,17 @@ const AppLayout: React.FC = () => {
                 <div className="max-w-7xl mx-auto">
                     <Outlet />
                 </div>
+
+                {/* Floating Upgrade Button */}
+                {!isPro && (
+                    <button
+                        onClick={handleUpgrade}
+                        className="fixed bottom-8 right-8 z-[100] bg-primary hover:bg-primary/90 text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-primary/40 flex items-center gap-3 transition-all hover:scale-105 active:scale-95 animate-bounce-subtle"
+                    >
+                        <Zap size={20} fill="currentColor" className="text-white" />
+                        <span>⚡ Fazer Upgrade</span>
+                    </button>
+                )}
             </main>
         </div>
     );
