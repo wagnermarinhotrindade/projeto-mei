@@ -6,34 +6,53 @@ export const startStripeCheckout = async (priceId: string, userId: string, userE
     localStorage.removeItem('pendingPriceId');
 
     try {
-        console.log('Iniciando Checkout para:', { priceId, userId, userEmail });
+        console.log('--- DEBUG STRIPE INICIO ---');
+        console.log('Payload:', { priceId, userId, userEmail });
 
-        const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-            body: {
-                priceId: priceId,
-                userId: userId,
-                userEmail: userEmail
-            }
+        const sessionResult = await supabase.auth.getSession();
+        const session = sessionResult.data.session;
+
+        if (!session) {
+            throw new Error('Usuário não autenticado. Faça login novamente.');
+        }
+
+        const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
+        const functionUrl = `${supabaseUrl}/functions/v1/create-checkout-session`;
+
+        console.log('Chamando API diretamente via fetch:', functionUrl);
+
+        const response = await fetch(functionUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`,
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+            },
+            body: JSON.stringify({ priceId, userId, userEmail })
         });
 
-        if (error) {
-            console.error('Erro retornado pela Edge Function:', error);
-            throw new Error(error.message || 'Erro desconhecido na função Supabase');
+        console.log('Resposta HTTP Status:', response.status);
+
+        const data = await response.json();
+        console.log('Dados recebidos da API:', data);
+
+        if (!response.ok) {
+            throw new Error(data.error || `Erro de rede (${response.status})`);
         }
 
         if (data?.url) {
-            console.log('URL de Checkout gerada:', data.url);
+            console.log('Redirecionando para Stripe:', data.url);
             window.location.href = data.url;
             return true;
         } else {
-            console.error('Resposta da API sem URL:', data);
-            throw new Error('A API não retornou uma URL de checkout válida.');
+            throw new Error('A API retornou sucesso mas não forneceu uma URL de checkout.');
         }
+
     } catch (err: any) {
-        console.error('Falha Crítica no Checkout:', err);
-        // 2. TRATAMENTO DE ERRO EXPLÍCITO: Exibe mensagem real do erro
+        console.error('--- DEBUG STRIPE FALHA ---');
+        console.error(err);
         const msg = err.message || 'Erro na comunicação com a Stripe';
-        alert(`Erro ao iniciar pagamento: ${msg}\n\nPor favor, tente novamente ou contate o suporte.`);
+        alert(`Erro Crítico no Pagamento:\n${msg}\n\nO loop foi interrompido. Você pode tentar novamente em Configurações.`);
         return false;
     }
 };
