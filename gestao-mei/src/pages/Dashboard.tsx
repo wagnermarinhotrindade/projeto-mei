@@ -26,7 +26,7 @@ const Dashboard: React.FC = () => {
             if (!user) return;
 
             // Interceptação Agressiva: Se houver intent na URL (vindo de cliques diretos já logado)
-            if (priceId && !sessionId) {
+            if (priceId && priceId !== 'free' && !sessionId) {
                 setCheckoutLoading(true);
                 const success = await startStripeCheckout(priceId, user.id, user.email || '');
                 // Se falhar ou não redirecionar, para o loading para permitir uso do dashboard
@@ -36,6 +36,11 @@ const Dashboard: React.FC = () => {
                     navigate('/dashboard', { replace: true });
                 }
                 return;
+            }
+
+            // Se for intenção 'free', apenas limpa a URL
+            if (priceId === 'free') {
+                navigate('/dashboard', { replace: true });
             }
 
             // Se retornar do Stripe com sucesso
