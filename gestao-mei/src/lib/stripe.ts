@@ -5,6 +5,12 @@ export const startStripeCheckout = async (priceId: string, userId: string, userE
     localStorage.removeItem('intentToPurchase');
     localStorage.removeItem('pendingPriceId');
 
+    // 2. BLINDAGEM PLANO FREE: Se o priceId for 'free', não disparar API da Stripe
+    if (priceId === 'free') {
+        console.log('Intenção Free detectada em startStripeCheckout. Abortando chamada Stripe.');
+        return true; // Retorna true para que o Dashboard entenda que pode seguir fluxo
+    }
+
     try {
         console.log('--- DEBUG STRIPE INICIO ---');
         console.log('Payload:', { priceId, userId, userEmail });

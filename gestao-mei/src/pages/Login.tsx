@@ -17,15 +17,16 @@ const Login: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            // Salva a intenção de compra no localStorage como backup antes do OAuth
-            if (priceId) {
-                localStorage.setItem('intentToPurchase', priceId);
-            }
+            // CAPTURA INTENÇÃO E PREPARA REDIRECIONAMENTO COM PARÂMETRO (Passagem 1 de 2)
+            const currentPriceId = searchParams.get('priceId');
+            const redirectUrl = currentPriceId
+                ? `${window.location.origin}/dashboard?checkoutPrice=${currentPriceId}`
+                : `${window.location.origin}/dashboard`;
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback${priceId ? `?priceId=${priceId}` : ''}`,
+                    redirectTo: redirectUrl,
                 },
             });
             if (error) throw error;
@@ -45,16 +46,8 @@ const Login: React.FC = () => {
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
 
-                // After successful login, check for pendingPriceId in localStorage
-                const backupPriceId = localStorage.getItem('intentToPurchase');
-                const currentParams = new URLSearchParams(window.location.search);
-
-                if (backupPriceId && !currentParams.has('priceId')) {
-                    currentParams.set('priceId', backupPriceId);
-                }
-
-                const search = currentParams.toString();
-                navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
+                // O checkout agora é tratado GLOBALMENTE no App.tsx
+                navigate('/dashboard', { replace: true });
             } else {
                 const { data, error } = await supabase.auth.signUp({
                     email,
@@ -68,20 +61,8 @@ const Login: React.FC = () => {
                 if (error) throw error;
                 alert('Confirme seu e-mail para ativar a conta!');
 
-                // After successful signup, check for pendingPriceId in localStorage
-                const backupPriceId = localStorage.getItem('intentToPurchase');
-                const currentParams = new URLSearchParams(window.location.search);
-
-                if (backupPriceId && !currentParams.has('priceId')) {
-                    currentParams.set('priceId', backupPriceId);
-                }
-
-                const search = currentParams.toString();
-                // If signup is successful, we might want to redirect to dashboard or a confirmation page
-                // For now, let's just alert and keep the user on the login page, or redirect to dashboard if there's a priceId
-                if (search) {
-                    navigate(`/dashboard${search ? `?${search}` : ''}`, { replace: true });
-                }
+                // Redireciona para dashboard se houver sessão, ou mantém aqui
+                navigate('/dashboard', { replace: true });
             }
         } catch (err: any) {
             setError(err.message || 'Erro ao processar autenticação');

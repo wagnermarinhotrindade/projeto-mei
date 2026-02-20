@@ -11,19 +11,8 @@ const AuthCallback = () => {
         const handleAuth = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                const intent = localStorage.getItem('intentToPurchase') || localStorage.getItem('pendingPriceId');
-
-                // Limpa IMEDIATAMENTE para evitar re-execução por eventos duplicados
-                localStorage.removeItem('intentToPurchase');
-                localStorage.removeItem('pendingPriceId');
-
-                if (intent && intent !== 'free') {
-                    // SE TIVER INTENÇÃO PRO, DISPARA STRIPE AGORA
-                    const success = await startStripeCheckout(intent, session.user.id, session.user.email || '');
-                    if (success) return; // Aborta qualquer outro redirecionamento
-                }
-
-                // Se for 'free' ou sem intenção, vai para o dashboard
+                // O checkout agora é tratado via URL no Dashboard.tsx
+                // para garantir que a intenção nunca seja perdida independente da rota de retorno.
                 navigate('/dashboard', { replace: true });
             }
         };

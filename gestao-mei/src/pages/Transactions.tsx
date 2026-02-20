@@ -40,6 +40,21 @@ const Transactions: React.FC = () => {
     const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
     const [limitReason, setLimitReason] = useState('');
     const [user, setUser] = useState<any>(null);
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+    const handleUpgrade = async () => {
+        if (!user) return;
+        setCheckoutLoading(true);
+        try {
+            const success = await startStripeCheckout('price_1T2cFGLjW93jPn5yJDSCAKev', user.id, user.email || '');
+            if (!success) {
+                setCheckoutLoading(false);
+            }
+        } catch (error) {
+            setCheckoutLoading(false);
+            console.error('Erro no checkout:', error);
+        }
+    };
 
     const categories = [
         { id: 'Venda de Produto', label: 'Vendas', icon: ShoppingBasket },
@@ -381,6 +396,7 @@ const Transactions: React.FC = () => {
                     </div>
                 </div>
             )}
+
             {/* LIMIT REACHED MODAL */}
             {isLimitModalOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 font-manrope">
@@ -388,7 +404,7 @@ const Transactions: React.FC = () => {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
 
                         <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center text-primary mx-auto mb-8 border border-primary/20 group-hover:scale-110 transition-transform">
-                            <Zap size={40} fill="currentColor" />
+                            {checkoutLoading ? <Loader2 className="animate-spin" size={40} /> : <Zap size={40} fill="currentColor" />}
                         </div>
 
                         <h2 className="text-3xl font-black mb-4">Limite Atingido!</h2>
@@ -398,13 +414,15 @@ const Transactions: React.FC = () => {
 
                         <div className="space-y-4">
                             <button
-                                onClick={() => user && startStripeCheckout('price_1T2d6SLjW93jPn5yKFFhiedU', user.id, user.email || '')}
-                                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95 text-lg uppercase tracking-widest"
+                                onClick={handleUpgrade}
+                                disabled={checkoutLoading}
+                                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95 text-lg uppercase tracking-widest flex items-center justify-center gap-2"
                             >
-                                Desbloquear Pro
+                                {checkoutLoading ? <Loader2 className="animate-spin" size={20} /> : 'Desbloquear Pro'}
                             </button>
                             <button
                                 onClick={() => setIsLimitModalOpen(false)}
+                                disabled={checkoutLoading}
                                 className="w-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white py-5 rounded-2xl font-bold transition-all text-sm"
                             >
                                 Continuar no Plano Free

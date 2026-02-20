@@ -25,14 +25,30 @@ const Dashboard: React.FC = () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
 
-            // Interceptação Agressiva: Se houver intent na URL (vindo de cliques diretos já logado)
-            if (priceId && priceId !== 'free' && !sessionId) {
+            // INTERCEPTAÇÃO DE INTENÇÃO VIA URL (Passagem 2 de 2 - 100% à prova de falhas)
+            const queryParams = new URLSearchParams(window.location.search);
+            const checkoutPrice = queryParams.get('checkoutPrice');
+
+            if (checkoutPrice && checkoutPrice.startsWith('price_')) {
+                console.log('Intenção via URL detectada:', checkoutPrice);
+
+                // Limpa a URL IMEDIATAMENTE para evitar loops em F5 ou navegação
+                window.history.replaceState({}, document.title, window.location.pathname);
+
                 setCheckoutLoading(true);
-                const success = await startStripeCheckout(priceId, user.id, user.email || '');
-                // Se falhar ou não redirecionar, para o loading para permitir uso do dashboard
+                const success = await startStripeCheckout(checkoutPrice, user.id, user.email || '');
                 if (!success) {
                     setCheckoutLoading(false);
-                    // Limpa o parâmetro da URL para não tentar de novo no refresh
+                }
+                return;
+            }
+
+            // Fallback para intenções diretas na URL (pre-existente)
+            if (priceId && priceId !== 'free' && !sessionId && !checkoutPrice) {
+                setCheckoutLoading(true);
+                const success = await startStripeCheckout(priceId, user.id, user.email || '');
+                if (!success) {
+                    setCheckoutLoading(false);
                     navigate('/dashboard', { replace: true });
                 }
                 return;
@@ -82,10 +98,12 @@ const Dashboard: React.FC = () => {
                 <Loader2 className="animate-spin text-primary" size={48} />
                 <div className="text-center">
                     <p className="text-white font-black text-xl mb-1">
-                        {checkoutLoading ? 'Preparando seu Checkout Seguro...' : 'Carregando Dashboard...'}
+                        {checkoutLoading ? 'Redirecionando para o pagamento...' : 'Carregando Dashboard...'}
                     </p>
                     <p className="text-white/40 text-sm font-medium px-4">
-                        Isso pode levar alguns segundos enquanto conectamos com a Stripe.
+                        {checkoutLoading
+                            ? 'Preparando seu ambiente de pagamento seguro via Stripe.'
+                            : 'Gerenciando suas ferramentas financeiras...'}
                     </p>
                 </div>
 
