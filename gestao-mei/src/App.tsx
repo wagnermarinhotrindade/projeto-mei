@@ -35,10 +35,11 @@ function App() {
 
                 try {
                     await startStripeCheckout(pendingPrice, user.id, user.email || '');
+                    return true;
                 } catch (err) {
                     console.error('Erro no Porteiro (Stripe):', err);
-                    setLoading(false);
                     setIsRedirecting(false);
+                    return false;
                 }
                 return true; // Houve intercepção
             }

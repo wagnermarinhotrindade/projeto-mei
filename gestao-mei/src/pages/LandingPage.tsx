@@ -26,13 +26,20 @@ const LandingPage: React.FC = () => {
     }, []);
 
     const handleSubscription = async (priceId: string) => {
-        // Salva a intenção de compra imediatamente no localStorage
-        localStorage.setItem('intentToPurchase', priceId);
+        if (priceId === 'free') {
+            // Limpa qualquer intenção residual ao escolher o plano grátis
+            localStorage.removeItem('checkout_price_id');
+            localStorage.removeItem('intentToPurchase');
+        } else {
+            // Salva a intenção de compra imediatamente no localStorage para planos Pro
+            localStorage.setItem('checkout_price_id', priceId);
+            localStorage.setItem('intentToPurchase', priceId);
+        }
 
         if (isLoggedIn) {
-            navigate(`/dashboard?priceId=${priceId}`);
+            navigate(`/dashboard${priceId !== 'free' ? `?priceId=${priceId}` : ''}`);
         } else {
-            navigate(`/auth?priceId=${priceId}`);
+            navigate(`/auth${priceId !== 'free' ? `?priceId=${priceId}` : ''}`);
         }
     };
 
