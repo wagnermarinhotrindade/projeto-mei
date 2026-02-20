@@ -22,8 +22,12 @@ const LandingPage: React.FC = () => {
     React.useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setIsLoggedIn(!!session);
+            if (session) {
+                console.log('Landing: Usuário já logado, redirecionando para Dashboard...');
+                navigate('/dashboard', { replace: true });
+            }
         });
-    }, []);
+    }, [navigate]);
 
     const handleSubscription = async (priceId: string) => {
         if (priceId === 'free') {

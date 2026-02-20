@@ -11,7 +11,14 @@ const Login: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const priceId = searchParams.get('priceId');
+    React.useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                console.log('Login: Sessão ativa detectada, movendo para Dashboard...');
+                navigate('/dashboard', { replace: true });
+            }
+        });
+    }, [navigate]);
 
     const handleGoogleLogin = async () => {
         setLoading(true);
@@ -25,10 +32,15 @@ const Login: React.FC = () => {
                 localStorage.setItem('checkout_price_id', priceId);
             }
 
+            // PASSO 2: Construir URL de retorno dinâmica (crítico para o fluxo Pro vs Free)
+            const redirectUrl = priceId
+                ? `${window.location.origin}/dashboard?checkoutPrice=${priceId}`
+                : `${window.location.origin}/dashboard`;
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/dashboard`
+                    redirectTo: redirectUrl
                 }
             });
             if (error) throw error;
