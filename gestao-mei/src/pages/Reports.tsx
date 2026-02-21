@@ -28,40 +28,49 @@ const Reports: React.FC = () => {
     const [user, setUser] = useState<any>(null);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
 
+    const fetchData = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        setUser(user);
+
+        // Fetch Plan Status
+        const { data: profile } = await supabase
+            .from('users_profile')
+            .select('nome_empresa, nome_completo, plano')
+            .eq('id', user.id)
+            .single();
+
+        if (profile) {
+            setCompanyInfo({
+                nome_empresa: profile.nome_empresa || 'Minha Empresa MEI',
+                nome_completo: profile.nome_completo || ''
+            });
+            setUserPlan(profile.plano || 'gratis');
+        }
+
+        const { data, error } = await supabase
+            .from('transacoes')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('data', { ascending: false });
+
+        if (error) console.error(error);
+        else setTransactions(data || []);
+
+        setLoading(false);
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            setUser(user);
+        fetchData();
 
-            // Fetch Plan Status
-            const { data: profile } = await supabase
-                .from('users_profile')
-                .select('nome_empresa, nome_completo, plano')
-                .eq('id', user.id)
-                .single();
-
-            if (profile) {
-                setCompanyInfo({
-                    nome_empresa: profile.nome_empresa || 'Minha Empresa MEI',
-                    nome_completo: profile.nome_completo || ''
-                });
-                setUserPlan(profile.plano || 'gratis');
-            }
-
-            const { data, error } = await supabase
-                .from('transacoes')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('data', { ascending: false });
-
-            if (error) console.error(error);
-            else setTransactions(data || []);
-
-            setLoading(false);
+        // Sincronização Automática: Refresh quando o usuário volta para a aba do app
+        const handleFocus = () => {
+            console.log('App recuperou o foco. Atualizando dados do perfil...');
+            fetchData();
         };
 
-        fetchData();
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
     }, []);
 
     const handleUpgrade = async () => {

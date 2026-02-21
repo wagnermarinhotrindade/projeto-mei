@@ -18,40 +18,47 @@ const Dashboard: React.FC = () => {
 
     const sessionId = searchParams.get('session_id');
 
+    const fetchData = async () => {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (!currentUser) return;
+
+        // Se retornar do Stripe com sucesso
+        if (sessionId) {
+            navigate('/dashboard', { replace: true });
+            alert('Assinatura confirmada! Seu Plano Pro já está ativo. Aproveite os recursos ilimitados.');
+        }
+
+        const { data, error } = await supabase
+            .from('transacoes')
+            .select('*')
+            .eq('user_id', currentUser.id);
+
+        if (error) {
+            console.error(error);
+        } else if (data) {
+            const income = data.filter(t => t.tipo.includes('Receita')).reduce((acc, t) => acc + t.valor, 0);
+            const expense = data.filter(t => t.tipo.includes('Despesa')).reduce((acc, t) => acc + t.valor, 0);
+            const profit = income - expense;
+
+            setStats([
+                { label: 'Faturamento Anual', value: `R$ ${income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingUp, color: 'text-green-400', raw: income },
+                { label: 'Despesas Totais', value: `R$ ${expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingDown, color: 'text-red-400', raw: expense },
+                { label: 'Lucro Líquido', value: `R$ ${profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: Wallet, color: 'text-primary', raw: profit },
+            ]);
+        }
+        setLoading(false);
+    };
+
     useEffect(() => {
-        const fetchData = async () => {
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
-            if (!currentUser) return;
+        fetchData();
 
-
-            // Se retornar do Stripe com sucesso
-            if (sessionId) {
-                navigate('/dashboard', { replace: true });
-                alert('Assinatura confirmada! Seu Plano Pro já está ativo. Aproveite os recursos ilimitados.');
-            }
-
-            const { data, error } = await supabase
-                .from('transacoes')
-                .select('*')
-                .eq('user_id', currentUser.id);
-
-            if (error) {
-                console.error(error);
-            } else if (data) {
-                const income = data.filter(t => t.tipo.includes('Receita')).reduce((acc, t) => acc + t.valor, 0);
-                const expense = data.filter(t => t.tipo.includes('Despesa')).reduce((acc, t) => acc + t.valor, 0);
-                const profit = income - expense;
-
-                setStats([
-                    { label: 'Faturamento Anual', value: `R$ ${income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingUp, color: 'text-green-400', raw: income },
-                    { label: 'Despesas Totais', value: `R$ ${expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingDown, color: 'text-red-400', raw: expense },
-                    { label: 'Lucro Líquido', value: `R$ ${profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: Wallet, color: 'text-primary', raw: profit },
-                ]);
-            }
-            setLoading(false);
+        const handleFocus = () => {
+            console.log('Dashboard recuperou o foco. Atualizando dados...');
+            fetchData();
         };
 
-        fetchData();
+        window.addEventListener('focus', handleFocus);
+        return () => window.removeEventListener('focus', handleFocus);
     }, [sessionId, navigate]);
 
     const limitPercentage = Math.min(Math.round((stats[0].raw / 81000) * 100), 100);
