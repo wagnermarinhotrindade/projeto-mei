@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
+import ReactPixel from 'react-facebook-pixel';
 import { supabase } from './lib/supabase';
 import { Loader2 } from 'lucide-react';
 import { startStripeCheckout } from './lib/stripe';
@@ -12,6 +13,17 @@ import Settings from './pages/Settings';
 import AppLayout from './components/layout/AppLayout';
 import LandingPage from './pages/LandingPage';
 import AuthCallback from './pages/AuthCallback';
+
+// Component to handle Pixel PageViews on route change
+const FacebookPixelTracker = () => {
+    const location = useLocation();
+
+    useEffect(() => {
+        ReactPixel.pageView();
+    }, [location]);
+
+    return null;
+};
 
 const Placeholder = ({ title }: { title: string }) => (
     <div className="flex flex-col items-center justify-center h-[60vh] text-white/20">
@@ -26,6 +38,12 @@ function App() {
     const [isRedirecting, setIsRedirecting] = useState(false);
 
     useEffect(() => {
+        // Initialize Meta Pixel
+        ReactPixel.init('2718944121837716', undefined, {
+            autoConfig: true,
+            debug: false,
+        });
+
         const checkIntent = async (user: any) => {
             // REGRA ESTRITA: Captura a intenção no Provider ANTES de liberar rotas
             const pendingPrice = localStorage.getItem('checkout_price_id');
@@ -42,7 +60,6 @@ function App() {
                     setIsRedirecting(false);
                     return false;
                 }
-                return true; // Houve intercepção
             }
             return false;
         };
@@ -53,7 +70,7 @@ function App() {
 
             if (initialSession?.user) {
                 const intercepted = await checkIntent(initialSession.user);
-                if (intercepted) return; // Mantém loading/isRedirecting para evitar loop
+                if (intercepted) return;
             }
 
             setLoading(false);
@@ -94,6 +111,7 @@ function App() {
 
     return (
         <Router>
+            <FacebookPixelTracker />
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route
