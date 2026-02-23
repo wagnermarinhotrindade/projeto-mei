@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { supabase } from './lib/supabase';
 import { Loader2 } from 'lucide-react';
 import { startStripeCheckout } from './lib/stripe';
@@ -109,6 +110,7 @@ function App() {
                     <Route path="/settings" element={<Settings />} />
                 </Route>
             </Routes>
+            <Analytics />
         </Router>
     );
 }
