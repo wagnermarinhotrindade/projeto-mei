@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -11,9 +11,11 @@ const Login: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const priceId = searchParams.get('priceId');
 
-    React.useEffect(() => {
+    // Get priceId from URL params once at the component level
+    const urlPriceId = searchParams.get('priceId');
+
+    useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
                 console.log('Login: Sessão ativa detectada, movendo para Dashboard...');
@@ -26,26 +28,24 @@ const Login: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const priceId = searchParams.get('priceId');
-
-            // PASSO 1: Salvar a intenção localmente antes de sair para o OAuth
-            if (priceId && priceId.startsWith('price_')) {
-                console.log('Salvando intenção de compra no localStorage:', priceId);
-                localStorage.setItem('checkout_price_id', priceId);
+            // Use the component-level urlPriceId instead of re-fetching or shadowing
+            if (urlPriceId && urlPriceId.startsWith('price_')) {
+                console.log('Salvando intenção de compra no localStorage:', urlPriceId);
+                localStorage.setItem('checkout_price_id', urlPriceId);
             }
 
-            // PASSO 2: Construir URL de retorno dinâmica (crítico para o fluxo Pro vs Free)
-            const redirectUrl = priceId
-                ? `${window.location.origin}/dashboard?checkoutPrice=${priceId}`
+            // PASSO 2: Construir URL de retorno dinâmica
+            const redirectUrl = urlPriceId
+                ? `${window.location.origin}/dashboard?checkoutPrice=${urlPriceId}`
                 : `${window.location.origin}/dashboard`;
 
-            const { error } = await supabase.auth.signInWithOAuth({
+            const { error: authError } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
                     redirectTo: redirectUrl
                 }
             });
-            if (error) throw error;
+            if (authError) throw authError;
         } catch (err: any) {
             setError(err.message || 'Erro ao conectar com Google');
             setLoading(false);
@@ -59,25 +59,24 @@ const Login: React.FC = () => {
 
         try {
             if (isLogin) {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) throw error;
+                const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+                if (authError) throw authError;
 
                 // O checkout agora é tratado GLOBALMENTE no App.tsx
                 navigate('/dashboard', { replace: true });
             } else {
-                const { data, error } = await supabase.auth.signUp({
+                const { error: authError } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
                         data: {
-                            pending_plan: priceId
+                            pending_plan: urlPriceId // Use urlPriceId clearly
                         }
                     }
                 });
-                if (error) throw error;
+                if (authError) throw authError;
                 alert('Confirme seu e-mail para ativar a conta!');
 
-                // Redireciona para dashboard se houver sessão, ou mantém aqui
                 navigate('/dashboard', { replace: true });
             }
         } catch (err: any) {
