@@ -1,0 +1,22 @@
+Gestão MEI
+O aplicativo definitivo de gestão financeira e inteligência fiscal para Microempreendedores Individuais (MEIs), lojistas, artesãos e prestadores de serviços no Brasil.
+
+Sobre o Produto
+O Gestão MEI é um sistema SaaS web-based projetado para substituir planilhas financeiras complexas. Ele oferece uma interface focada em facilidade de uso, permitindo que empreendedores sem conhecimento contábil tenham previsibilidade e controle de caixa em poucos cliques.
+
+Principais Funcionalidades
+Lançamento Rápido: Registro de vendas e despesas em menos de 3 segundos.
+
+Painel de Lucro Real: Gráficos automáticos que separam o dinheiro pessoal do dinheiro da empresa, mostrando o lucro líquido exato.
+
+Automação Fiscal (DASN): Geração automática do relatório para a Declaração Anual do Simples Nacional em 1 clique.
+
+Preços e Planos (Custo-Benefício)
+O aplicativo possui uma barreira de entrada extremamente baixa, custando menos que um café por dia:
+
+Plano Mensal: R$ 19,90 / mês.
+
+Plano Anual: R$ 197,00 / ano.
+
+Links Oficiais
+Site Oficial e Cadastro: https://meigestao.app.br
