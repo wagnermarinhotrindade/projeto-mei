@@ -104,17 +104,17 @@ const Reports: React.FC = () => {
     const limitPercentage = Math.min((totalYTD / limitMEI) * 100, 100);
     const ticketMedio = totalYTD / (filteredTransactions.filter(t => t.tipo.includes('Receita')).length || 1);
 
-    // Lógica de agrupamento mensal real
+    // Lógica de agrupamento mensal — usa tipo_receita se disponível, senão fallback por categoria
     const monthlySummary = Array.from({ length: 12 }, (_, i) => {
         const monthTransactions = filteredTransactions.filter(t => new Date(t.data).getMonth() === i);
-        const faturamentoBruto = monthTransactions
-            .filter(t => t.tipo.includes('Receita'))
+        const receitas = monthTransactions.filter(t => t.tipo?.includes('Receita'));
+        const faturamentoBruto = receitas.reduce((acc, t) => acc + t.valor, 0);
+        // Prioriza tipo_receita (novo campo), fallback para categoria
+        const servicos = receitas
+            .filter(t => t.tipo_receita === 'servico' || (!t.tipo_receita && t.categoria === 'Prestação de Serviço'))
             .reduce((acc, t) => acc + t.valor, 0);
-        const servicos = monthTransactions
-            .filter(t => t.categoria === 'Prestação de Serviço' && t.tipo.includes('Receita'))
-            .reduce((acc, t) => acc + t.valor, 0);
-        const comercio = monthTransactions
-            .filter(t => t.categoria === 'Venda de Produto' && t.tipo.includes('Receita'))
+        const comercio = receitas
+            .filter(t => t.tipo_receita === 'comercio' || (!t.tipo_receita && t.categoria === 'Venda de Produto'))
             .reduce((acc, t) => acc + t.valor, 0);
 
         return {
@@ -267,7 +267,7 @@ const Reports: React.FC = () => {
                             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                             className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition-all outline-none appearance-none text-white overflow-hidden cursor-pointer"
                         >
-                            {[2023, 2024, 2025].map(year => (
+                            {[2023, 2024, 2025, 2026].map(year => (
                                 <option key={year} value={year} className="bg-background text-white">{year} (Jan - Dez)</option>
                             ))}
                         </select>
