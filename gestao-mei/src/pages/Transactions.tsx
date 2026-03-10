@@ -281,6 +281,8 @@ const Transactions: React.FC = () => {
         setIsSubmitting(false);
     };
 
+    const [viewingImageUrl, setViewingImageUrl] = useState<string | null>(null);
+
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza que deseja excluir?')) return;
         const { error } = await supabase.from('transacoes').delete().eq('id', id);
@@ -364,9 +366,13 @@ const Transactions: React.FC = () => {
                                             <div className="flex items-center gap-2">
                                                 {item.descricao}
                                                 {item.comprovante_url && (
-                                                    <a href={item.comprovante_url} target="_blank" rel="noreferrer" aria-label="Ver comprovante">
-                                                        <Paperclip size={14} className="text-primary opacity-70 hover:opacity-100 transition-opacity" />
-                                                    </a>
+                                                    <button 
+                                                        onClick={() => setViewingImageUrl(item.comprovante_url)}
+                                                        className="p-1 hover:bg-white/10 rounded-md transition-all text-primary"
+                                                        aria-label="Ver comprovante"
+                                                    >
+                                                        {item.comprovante_url.toLowerCase().endsWith('.pdf') ? <Paperclip size={14} /> : <Search size={14} />}
+                                                    </button>
                                                 )}
                                                 {item.is_recorrente && (
                                                     <RefreshCw size={12} className="text-white/30" aria-label="Recorrente" />
@@ -410,6 +416,29 @@ const Transactions: React.FC = () => {
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+
+            {/* ===== VISUALIZADOR DE COMPROVANTE (MODAL) ===== */}
+            {viewingImageUrl && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 md:p-10 animate-in fade-in zoom-in duration-300">
+                    <button 
+                        onClick={() => setViewingImageUrl(null)}
+                        className="absolute top-6 right-6 p-4 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all z-10"
+                    >
+                        <X size={24} />
+                    </button>
+                    <div className="relative w-full max-w-5xl h-full flex items-center justify-center">
+                        {viewingImageUrl.toLowerCase().endsWith('.pdf') ? (
+                            <iframe src={viewingImageUrl} className="w-full h-full rounded-2xl border border-white/10" />
+                        ) : (
+                            <img 
+                                src={viewingImageUrl} 
+                                alt="Comprovante" 
+                                className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl shadow-black/50 border border-white/5" 
+                            />
+                        )}
                     </div>
                 </div>
             )}
