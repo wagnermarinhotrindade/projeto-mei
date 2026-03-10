@@ -25,8 +25,10 @@ const FeedbackHub: React.FC = () => {
             .from('feedback_tickets')
             .insert({
                 user_id: user.id,
+                titulo: message.substring(0, 50),
                 mensagem: message,
-                tipo: type
+                tipo: type,
+                status: 'pendente'
             });
 
         if (error) {
