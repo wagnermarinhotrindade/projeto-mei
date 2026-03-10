@@ -11,7 +11,8 @@ import {
     AlertCircle,
     FileText,
     Zap,
-    HelpCircle
+    HelpCircle,
+    Lock
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
@@ -343,10 +344,11 @@ const Reports: React.FC = () => {
                         </select>
                         <button
                             onClick={handleGenerateReport}
-                            className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl text-sm font-black shadow-lg shadow-primary/30 hover:-translate-y-1 transition-all"
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-black shadow-lg transition-all ${isPro ? 'bg-primary text-white shadow-primary/30 hover:-translate-y-1' : 'bg-white/5 border border-white/10 text-white/40 cursor-not-allowed hover:bg-white/10'}`}
+                            title={isPro ? '' : 'Disponível apenas no plano Elite Pro'}
                         >
-                            <FileText size={18} />
-                            Gerar Relatório DASN
+                            {isPro ? <FileText size={18} /> : <Lock size={16} className="text-amber-400" />}
+                            {isPro ? 'Gerar Relatório DASN' : 'Relatório DASN (Pro)'}
                         </button>
                     </div>
                 </div>
@@ -391,48 +393,60 @@ const Reports: React.FC = () => {
                     </div>
 
                     {/* IRPF Simulator Card */}
-                    <div className="md:col-span-2 lg:col-span-2 bg-white/[0.04] border border-white/10 p-8 rounded-[32px] relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
+                    {isPro ? (
+                        <div className="md:col-span-2 lg:col-span-2 bg-white/[0.04] border border-white/10 p-8 rounded-[32px] relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" />
 
-                        <div className="flex items-center justify-between mb-8 relative z-10">
-                            <div>
-                                <span className="px-3 py-1 bg-white/10 text-white/60 text-[8px] font-black uppercase tracking-widest rounded-full border border-white/10">
-                                    PROFISSIONAL (FISCAL)
-                                </span>
-                                <h2 className="text-2xl font-black mt-2 leading-none flex items-center gap-2">
-                                    Simulador IRPF
-                                    <span className="group relative">
-                                        <HelpCircle size={16} className="text-white/20 cursor-help hover:text-primary transition-colors" />
-                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-white text-black text-[10px] font-bold rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-2xl z-50 leading-relaxed">
-                                            <span className="text-primary block mb-1 uppercase font-black tracking-widest text-[8px]">Dicionário MEI</span>
-                                            Parcela isenta do faturamento com base no lucro presumido (ex: 32% para serviços e 8% para comércio).
-                                        </span>
+                            <div className="flex items-center justify-between mb-8 relative z-10">
+                                <div>
+                                    <span className="px-3 py-1 bg-white/10 text-white/60 text-[8px] font-black uppercase tracking-widest rounded-full border border-white/10">
+                                        PROFISSIONAL (FISCAL)
                                     </span>
-                                </h2>
+                                    <h2 className="text-2xl font-black mt-2 leading-none flex items-center gap-2">
+                                        Simulador IRPF
+                                        <span className="group relative">
+                                            <HelpCircle size={16} className="text-white/20 cursor-help hover:text-primary transition-colors" />
+                                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-white text-black text-[10px] font-bold rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-2xl z-50 leading-relaxed">
+                                                <span className="text-primary block mb-1 uppercase font-black tracking-widest text-[8px]">Dicionário MEI</span>
+                                                Parcela isenta do faturamento com base no lucro presumido (ex: 32% para serviços e 8% para comércio).
+                                            </span>
+                                        </span>
+                                    </h2>
+                                </div>
+                                <select
+                                    value={activityType}
+                                    onChange={(e) => setActivityType(e.target.value)}
+                                    className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white outline-none focus:border-primary/50 cursor-pointer"
+                                >
+                                    <option value="Serviços">Serviços (32%)</option>
+                                    <option value="Comércio">Comércio (8%)</option>
+                                </select>
                             </div>
-                            <select
-                                value={activityType}
-                                onChange={(e) => setActivityType(e.target.value)}
-                                className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white outline-none focus:border-primary/50 cursor-pointer"
-                            >
-                                <option value="Serviços">Serviços (32%)</option>
-                                <option value="Comércio">Comércio (8%)</option>
-                            </select>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-6 relative z-10">
-                            <div>
-                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-2">Parcela Isenta</p>
-                                <p className="text-2xl font-black text-green-400">R$ {exemptValue.toLocaleString('pt-BR')}</p>
-                                <p className="text-[9px] text-white/30 mt-1 font-medium">Isento de declaração</p>
-                            </div>
-                            <div>
-                                <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-2">Lucro Tributável</p>
-                                <p className="text-2xl font-black text-white">R$ {taxableValue.toLocaleString('pt-BR')}</p>
-                                <p className="text-[9px] text-white/30 mt-1 font-medium">A declarar no IRPF</p>
+                            <div className="grid grid-cols-2 gap-6 relative z-10">
+                                <div>
+                                    <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-2">Parcela Isenta</p>
+                                    <p className="text-2xl font-black text-green-400">R$ {exemptValue.toLocaleString('pt-BR')}</p>
+                                    <p className="text-[9px] text-white/30 mt-1 font-medium">Isento de declaração</p>
+                                </div>
+                                <div>
+                                    <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-2">Lucro Tributável</p>
+                                    <p className="text-2xl font-black text-white">R$ {taxableValue.toLocaleString('pt-BR')}</p>
+                                    <p className="text-[9px] text-white/30 mt-1 font-medium">A declarar no IRPF</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="md:col-span-2 lg:col-span-2 bg-white/[0.04] border border-white/10 p-8 rounded-[32px] relative overflow-hidden group flex flex-col items-center justify-center text-center min-h-[300px]">
+                             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-50" />
+                             <Lock size={48} className="text-primary/80 mb-4 animate-in zoom-in group-hover:scale-110 transition-transform" />
+                             <h3 className="text-2xl font-black text-white mb-2">Simulador IRPF</h3>
+                             <p className="text-white/60 mb-6 max-w-sm">Saiba exatamente quanto do seu faturamento MEI é isento e quanto deve ser declarado no IRPF Pessoa Física.</p>
+                             <button onClick={handleUpgrade} className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl font-black transition-all shadow-lg shadow-primary/20">
+                                 Desbloquear Recurso
+                             </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Mini Stats Row */}

@@ -334,6 +334,12 @@ const Transactions: React.FC = () => {
         item.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const faturamentoTotal = data
+        .filter(t => t.tipo?.includes('Receita'))
+        .reduce((acc, t) => acc + (t.valor || 0), 0);
+    
+    const isLimitReached = !isPro && faturamentoTotal >= 1000;
+
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex items-center justify-between">
@@ -341,13 +347,23 @@ const Transactions: React.FC = () => {
                     <h1 className="text-4xl font-black tracking-tight">Livro Caixa</h1>
                     <p className="text-white/40 mt-1 font-medium">Controle seu fluxo de caixa detalhadamente.</p>
                 </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-primary hover:bg-primary/90 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-primary/20 flex items-center gap-2 transition-all active:scale-95 group"
-                >
-                    <Plus size={22} className="group-hover:rotate-90 transition-transform" />
-                    Novo Lançamento
-                </button>
+                {isLimitReached ? (
+                    <button
+                        onClick={handleUpgrade}
+                        className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black px-8 py-3 rounded-2xl shadow-xl shadow-red-600/20 flex flex-col items-center justify-center transition-all active:scale-95 group text-sm relative overflow-hidden"
+                    >
+                        <span className="flex items-center gap-2 z-10"><Lock size={16} /> Limite de R$ 1000 atingido.</span>
+                        <span className="text-[10px] uppercase tracking-widest font-bold opacity-80 z-10">Migre para o Pro para continuar</span>
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-primary hover:bg-primary/90 text-white font-black px-8 py-4 rounded-2xl shadow-xl shadow-primary/20 flex items-center gap-2 transition-all active:scale-95 group"
+                    >
+                        <Plus size={22} className="group-hover:rotate-90 transition-transform" />
+                        Novo Lançamento
+                    </button>
+                )}
             </div>
 
             {loading ? (
@@ -656,12 +672,11 @@ const Transactions: React.FC = () => {
                                 </div>
 
                                 {/* Upload de Comprovante */}
-                                <div>
-                                    <p className="text-[10px] font-black text-white/20 uppercase tracking-[3px] mb-3 flex items-center gap-2">
-                                        <Upload size={12} /> COMPROVANTE (OPCIONAL)
-                                        {!isPro && <span className="ml-1 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full text-[8px] font-black flex items-center gap-1"><Lock size={8} /> PRO</span>}
-                                    </p>
-                                    {isPro ? (
+                                {isPro && (
+                                    <div>
+                                        <p className="text-[10px] font-black text-white/20 uppercase tracking-[3px] mb-3 flex items-center gap-2">
+                                            <Upload size={12} /> COMPROVANTE (OPCIONAL)
+                                        </p>
                                         <div>
                                             <label className={`flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed cursor-pointer transition-all ${comprovante ? 'border-primary/40 bg-primary/5' : 'border-white/10 bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04]'}`}>
                                                 <input
@@ -703,22 +718,8 @@ const Transactions: React.FC = () => {
                                                 </div>
                                             )}
                                         </div>
-                                    ) : (
-                                        <div
-                                            onClick={handleUpgrade}
-                                            className="flex items-center justify-between p-5 rounded-3xl border border-amber-500/20 bg-amber-500/5 cursor-pointer hover:bg-amber-500/10 transition-all"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <Lock size={18} className="text-amber-400" />
-                                                <div>
-                                                    <p className="text-sm font-black text-white">Upload de comprovantes</p>
-                                                    <p className="text-xs text-white/40 font-bold">Disponível no Plano Pro</p>
-                                                </div>
-                                            </div>
-                                            <span className="px-4 py-2 bg-primary text-white text-xs font-black rounded-xl">Fazer Upgrade</span>
-                                        </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
 
                                 {/* Toggle de Recorrência */}
                                 <div>

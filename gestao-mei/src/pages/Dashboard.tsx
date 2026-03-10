@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Wallet, Loader2, ArrowUpRight, BarChart2, HelpCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Loader2, ArrowUpRight, BarChart2, HelpCircle, Zap } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
@@ -13,6 +13,9 @@ const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Se
 const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [transactions, setTransactions] = useState<any[]>([]);
+    const [isPro, setIsPro] = useState(false);
+    const [user, setUser] = useState<any>(null);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const sessionId = searchParams.get('session_id');
@@ -23,11 +26,20 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         if (!currentUser) return;
+        setUser(currentUser);
 
         if (sessionId) {
             navigate('/dashboard', { replace: true });
             alert('Assinatura confirmada! Seu Plano Pro já está ativo. Aproveite os recursos ilimitados.');
         }
+
+        const { data: profile } = await supabase
+            .from('users_profile')
+            .select('plano')
+            .eq('id', currentUser.id)
+            .single();
+
+        setIsPro(profile?.plano === 'pro');
 
         const { data, error } = await supabase
             .from('transacoes')
@@ -48,6 +60,17 @@ const Dashboard: React.FC = () => {
         window.addEventListener('focus', handleFocus);
         return () => window.removeEventListener('focus', handleFocus);
     }, [sessionId, navigate]);
+
+    useEffect(() => {
+        if (isPro && !localStorage.getItem('hasSeenProWelcome')) {
+            setShowWelcomeModal(true);
+        }
+    }, [isPro]);
+
+    const closeWelcomeModal = () => {
+        localStorage.setItem('hasSeenProWelcome', 'true');
+        setShowWelcomeModal(false);
+    };
 
     // --- Cálculos Financeiros ---
     const { income, expense, profit, mesesAtivos, projecaoAnual, chartData } = useMemo(() => {
@@ -109,8 +132,51 @@ const Dashboard: React.FC = () => {
         );
     }
 
+    const handleUpgrade = async () => {
+        if (!user) return;
+        try {
+            await startStripeCheckout('price_1T2d6SLjW93jPn5ye6wN7Ptg', user.id, user.email || '');
+        } catch (error) {
+            console.error('Erro no checkout Stripe:', error);
+        }
+    };
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            {showWelcomeModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-[#1A1A1A] border border-red-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 mt-10">
+                        <div className="w-16 h-16 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <Zap className="text-red-500" size={32} />
+                        </div>
+                        <h2 className="text-2xl font-black text-center mb-4">Bem-vindo ao Elite Pro!</h2>
+                        <p className="text-white/70 text-center mb-8 leading-relaxed">
+                            Seu upgrade foi concluído com sucesso. Todos os recursos avançados, como o Relatório de Auditoria, o Simulador IRPF e o Upload de Comprovantes já estão desbloqueados e prontos para uso.
+                        </p>
+                        <button 
+                            onClick={closeWelcomeModal}
+                            className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-red-600/20"
+                        >
+                            Explorar Recursos
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {!isPro && income >= 800 && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top mt-4">
+                    <p className="text-red-200 text-sm font-medium">
+                        Você está chegando ao limite do plano gratuito. Garanta sua segurança fiscal com o <strong className="text-white">Elite Pro</strong>.
+                    </p>
+                    <button 
+                        onClick={handleUpgrade}
+                        className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-lg flex-shrink-0"
+                    >
+                        Fazer Upgrade Agora
+                    </button>
+                </div>
+            )}
+
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>

@@ -1,361 +1,407 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     ChevronDown,
-    CheckCircle2,
     ArrowRight,
     FileText,
     ShieldCheck,
-    Users,
+    TrendingUp,
     Zap,
-    TrendingDown,
-    LayoutGrid
+    Lock,
+    BarChart3,
+    Activity,
+    CheckCircle2,
+    Cloud,
+    Shield
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+
+const Floating3D = ({ children }: { children: React.ReactNode }) => {
+    const [rotate, setRotate] = useState({ x: 0, y: 0 });
+    const cardRef = React.useRef<HTMLDivElement>(null);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!cardRef.current) return;
+        const card = cardRef.current;
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = (y - centerY) / 20;
+        const rotateY = (centerX - x) / 20;
+        setRotate({ x: rotateX, y: rotateY });
+    };
+
+    const handleMouseLeave = () => {
+        setRotate({ x: 0, y: 0 });
+    };
+
+    return (
+        <div 
+            ref={cardRef}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            className="transition-transform duration-200 ease-out"
+            style={{ 
+                perspective: '1000px',
+                transformStyle: 'preserve-3d',
+                transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`
+            }}
+        >
+            {children}
+        </div>
+    );
+};
 
 const LandingPage: React.FC = () => {
     const navigate = useNavigate();
     const [openFaq, setOpenFaq] = useState<number | null>(null);
-    const [isAnnual, setIsAnnual] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isAnnual, setIsAnnual] = useState(false);
+    const [isPro, setIsPro] = useState(false);
 
-    React.useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+    useEffect(() => {
+        const checkAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
             setIsLoggedIn(!!session);
+            
             if (session) {
-                console.log('Landing: Usuário já logado, redirecionando para Dashboard...');
-                navigate('/dashboard', { replace: true });
+                const { data: profile } = await supabase
+                    .from('users_profile')
+                    .select('plano')
+                    .eq('id', session.user.id)
+                    .single();
+                setIsPro(profile?.plano === 'pro');
             }
-        });
-    }, [navigate]);
+        };
+        checkAuth();
+    }, []);
 
-    const handleSubscription = async (priceId: string) => {
-        if (priceId === 'free') {
-            // Limpa qualquer intenção residual ao escolher o plano grátis
-            localStorage.removeItem('checkout_price_id');
-            localStorage.removeItem('intentToPurchase');
-        } else {
-            // Salva a intenção de compra imediatamente no localStorage para planos Pro
-            localStorage.setItem('checkout_price_id', priceId);
-            localStorage.setItem('intentToPurchase', priceId);
-        }
-
+    const handleCTA = () => {
         if (isLoggedIn) {
-            navigate(`/dashboard${priceId !== 'free' ? `?priceId=${priceId}` : ''}`);
+            navigate('/dashboard');
         } else {
-            navigate(`/auth${priceId !== 'free' ? `?priceId=${priceId}` : ''}`);
+            navigate('/auth');
+        }
+    };
+
+    const handleProCTA = () => {
+        if (isLoggedIn) {
+            navigate('/dashboard');
+        } else {
+            navigate(`/auth?plan=${isAnnual ? 'annual' : 'monthly'}`);
         }
     };
 
     const scrollToPricing = () => {
-        const element = document.getElementById('pricing');
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
+        const pricingSection = document.getElementById('planos');
+        if (pricingSection) {
+            pricingSection.scrollIntoView({ behavior: 'smooth' });
         }
     };
 
     const faqs = [
         {
-            q: "É seguro colocar meus dados?",
-            a: "Sim! Utilizamos criptografia de ponta e o banco de dados do Supabase, referência mundial em segurança de dados."
+            q: "Como a Inteligência Preditiva funciona na prática?",
+            a: "Nosso algoritmo analisa seu histórico de faturamento diário e mensal, calculando sua média de crescimento. Com base nisso, prevemos exatamente no mês em que você corre o risco de ultrapassar o limite do MEI, dando meses de antecedência para você se planejar."
         },
         {
-            q: "Precisa de cartão de crédito para testar?",
-            a: "Não! Você pode começar agora mesmo gratuitamente sem precisar cadastrar nenhum cartão."
+            q: "É seguro colocar meus dados financeiros aqui?",
+            a: "Absolutamente. Utilizamos infraestrutura de nível bancário (Supabase) com criptografia ponta a ponta. Seus dados são exclusivamente seus e nunca são compartilhados."
         },
         {
-            q: "Como o sistema me ajuda no limite de 81k?",
-            a: "Nós monitoramos seu faturamento automático e te avisamos quando você estiver chegando perto do limite anual do MEI."
+            q: "O relatório DASN substitui meu contador?",
+            a: "Nosso Relatório DASN-Elite organiza todos os seus dados e gera um PDF mastigado e à prova de erros, contendo exatamente os valores que você precisa declarar para a Receita Federal."
+        },
+        {
+            q: "Preciso cadastrar cartão de crédito para acessar?",
+            a: "Não! Você pode iniciar gratuitamente e sentir na prática o poder do nosso painel de controle sem nenhum compromisso."
         }
     ];
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white font-manrope selection:bg-primary/30">
+        <div className="min-h-screen bg-[#0D0D0D] text-white font-sans selection:bg-red-500/30 overflow-x-hidden">
             {/* Header */}
-            <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0a0a0a]/80 backdrop-blur-md">
+            <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0D0D0D]/80 backdrop-blur-md">
                 <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
-                            <span className="font-black text-xs text-white">MEI</span>
+                    <Link to="/" className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-rose-700 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
+                            <span className="font-black text-xs text-white tracking-wider">MEI</span>
                         </div>
-                        <span className="text-xl font-bold tracking-tight">Gestão<span className="text-primary">MEI</span></span>
+                        <span className="text-xl font-bold tracking-tight">Gestão<span className="text-red-500">MEI</span></span>
                     </Link>
 
                     <div className="flex items-center gap-6">
-                        <button
-                            onClick={scrollToPricing}
-                            className="text-white/60 hover:text-white font-bold transition-colors hidden sm:block"
-                        >
-                            Ver Planos
-                        </button>
                         <Link
                             to="/auth"
-                            className="bg-white/5 hover:bg-white/10 text-white px-6 py-2.5 rounded-full font-semibold border border-white/10 transition-all hover:scale-105"
+                            className="text-sm font-semibold text-white/70 hover:text-white transition-colors"
                         >
-                            Entrar
+                            Já tenho conta
                         </Link>
+                        <button
+                            onClick={scrollToPricing}
+                            className="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-bold transition-all shadow-lg shadow-red-600/20"
+                        >
+                            Acessar Central
+                        </button>
                     </div>
                 </div>
             </header>
 
             <main className="pt-24">
-                {/* Seção Hero */}
-                <section className="relative overflow-hidden pt-20 pb-32">
-                    {/* Background glow effects */}
-                    <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] pointer-events-none" />
+                {/* 1. Hero Section (O Gancho) */}
+                <section className="relative pt-24 pb-32">
+                    <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[120px] pointer-events-none" />
+                    
+                    <div className="container mx-auto px-6 relative z-10 text-center">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-bold mb-8 uppercase tracking-widest">
+                            <Lock size={14} />
+                            Segurança Fiscal de Elite
+                        </div>
 
-                    <div className="container mx-auto px-6 relative z-10">
-                        <div className="grid lg:grid-cols-2 gap-16 items-center text-center lg:text-left transition-all duration-700">
-                            <div className="animate-in fade-in slide-in-from-left-8 duration-1000">
-                                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-bold mb-8">
-                                    <Zap size={16} fill="currentColor" />
-                                    Feito para quem quer crescer
+                        <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight max-w-5xl mx-auto">
+                            O fim da dúvida e do medo de <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400">desenquadrar seu MEI.</span>
+                        </h1>
+
+                        <p className="text-xl md:text-2xl text-white/60 mb-12 font-medium max-w-3xl mx-auto leading-relaxed">
+                            Use a Inteligência Preditiva para prever seu faturamento, organizar seus impostos e emitir relatórios de auditoria prontos para a Receita Federal.
+                        </p>
+
+                        <button
+                            onClick={scrollToPricing}
+                            className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-12 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-red-600/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mx-auto"
+                        >
+                            Começar Agora Gratuitamente
+                            <ArrowRight size={20} />
+                        </button>
+                    </div>
+                </section>
+
+                {/* 2. Radar de Sobrevivência */}
+                <section className="py-24 border-t border-white/5 bg-white/[0.01]">
+                    <div className="container mx-auto px-6">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl md:text-5xl font-black mb-4">Radar de Sobrevivência</h2>
+                            <p className="text-lg text-white/50 max-w-2xl mx-auto">As 3 barreiras de proteção que impedem o seu negócio de ser autuado.</p>
+                        </div>
+
+                        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                            {/* Card 1 */}
+                            <div className="bg-[#121212] border border-white/10 p-8 rounded-3xl hover:border-red-500/50 transition-colors group">
+                                <div className="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <Activity className="text-red-500" size={28} />
                                 </div>
-
-                                <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight">
-                                    O Fim da <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Planilha Financeira</span>
-                                </h1>
-
-                                <p className="text-xl md:text-2xl text-white/60 mb-12 font-medium">
-                                    Controle seu MEI, gere relatórios e saiba seu lucro real em 3 cliques. Simples como deve ser.
+                                <h3 className="text-2xl font-bold mb-4">Inteligência Preditiva</h3>
+                                <p className="text-white/60 leading-relaxed">
+                                    Não seja pego de surpresa. Nosso sistema analisa sua média e projeta exatamente quando você corre o risco de estourar o limite de R$ 81.000.
                                 </p>
-
-                                <div className="flex flex-col sm:flex-row items-center gap-4 lg:justify-start justify-center">
-                                    <button
-                                        onClick={scrollToPricing}
-                                        className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-10 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-primary/40 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
-                                    >
-                                        Começar Grátis
-                                        <ArrowRight size={20} />
-                                    </button>
-                                    <a href="#beneficios" className="w-full sm:w-auto px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/5 transition-colors">
-                                        Ver como funciona
-                                    </a>
+                            </div>
+                            
+                            {/* Card 2 */}
+                            <div className="bg-[#121212] border border-white/10 p-8 rounded-3xl hover:border-blue-500/50 transition-colors group">
+                                <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <ShieldCheck className="text-blue-500" size={28} />
                                 </div>
+                                <h3 className="text-2xl font-bold mb-4">Simulador de IRPF</h3>
+                                <p className="text-white/60 leading-relaxed">
+                                    Saiba exatamente quanto do seu lucro é isento de imposto de renda e garanta que sua blindagem patrimonial está ocorrendo dentro da lei.
+                                </p>
                             </div>
 
-                            <div className="relative animate-in fade-in slide-in-from-right-8 duration-1000 group">
-                                <div className="absolute inset-0 bg-primary/20 blur-[120px] rounded-full scale-75 group-hover:bg-primary/30 transition-colors" />
-
-                                <div className="relative rounded-3xl p-1 bg-gradient-to-br from-white/10 to-transparent border border-white/10 shadow-2xl overflow-hidden aspect-[16/10] transition-all duration-700 hover:-translate-y-6 hover:scale-[1.03] hover:shadow-primary/20 animate-float">
-                                    <img
-                                        src="/deshdord.png"
-                                        alt="Gestão MEI Dashboard"
-                                        className="w-full h-full object-cover rounded-2xl"
-                                    />
+                            {/* Card 3 */}
+                            <div className="bg-[#121212] border border-white/10 p-8 rounded-3xl hover:border-rose-500/50 transition-colors group">
+                                <div className="w-14 h-14 bg-rose-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <FileText className="text-rose-500" size={28} />
                                 </div>
+                                <h3 className="text-2xl font-bold mb-4">Relatório DASN-Elite</h3>
+                                <p className="text-white/60 leading-relaxed">
+                                    Chega de quebrar a cabeça em Maio. Gere o relatório consolidado com os valores mastigados para declarar à Receita em 5 minutos. Com separação automática entre Serviços e Comércio para facilitar sua declaração anual.
+                                </p>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* Pain Section */}
-                <section className="py-48 bg-white/[0.02]">
+                {/* 2.5 Documentação com Padrão Contábil */}
+                <section className="py-24 border-t border-white/5 relative bg-[#0A0A0A]">
                     <div className="container mx-auto px-6">
-                        <div className="grid md:grid-cols-2 gap-16 items-center">
-                            <div>
-                                <h2 className="text-4xl md:text-5xl font-black mb-8 leading-tight">
-                                    Você mistura o dinheiro de casa com o da empresa?
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl md:text-5xl font-black mb-4">Documentação com Padrão Contábil</h2>
+                            <p className="text-lg text-white/50 max-w-2xl mx-auto">Relatórios prontos para a Receita Federal, gerados com um clique.</p>
+                        </div>
+                        <Floating3D>
+                            <div className="max-w-5xl mx-auto rounded-2xl bg-[#1A1A1A] border border-white/10 p-2 shadow-2xl relative group overflow-hidden">
+                                 <div className="absolute inset-0 bg-red-600/20 blur-[100px] rounded-full scale-75 group-hover:bg-red-600/30 transition-colors" />
+                                 <img src="/relatorio mei .PNG" alt="Relatório DASN-Elite" className="w-full h-auto rounded-xl border border-white/5 relative z-10 opacity-90 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                        </Floating3D>
+                    </div>
+                </section>
+
+                {/* 3. Central de Comando */}
+                <section className="py-32 relative">
+                    <div className="container mx-auto px-6">
+                        <div className="grid lg:grid-cols-2 gap-16 items-center">
+                            <div className="order-2 lg:order-1">
+                                <Floating3D>
+                                    <div className="relative group overflow-hidden">
+                                        <div className="absolute inset-0 bg-red-600/20 blur-[100px] rounded-full scale-75 group-hover:bg-red-600/30 transition-colors" />
+                                        <div className="relative rounded-2xl bg-[#1A1A1A] border border-white/10 p-2 shadow-2xl">
+                                            <img 
+                                                src="/deshboard.PNG" 
+                                                alt="Central de Comando exibindo R$ 888,00 e Radar 1.1%" 
+                                                className="w-full h-auto rounded-xl border border-white/5 opacity-90 group-hover:opacity-100 transition-opacity"
+                                            />
+                                        </div>
+                                    </div>
+                                </Floating3D>
+                            </div>
+                            
+                            <div className="order-1 lg:order-2">
+                                <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
+                                    Central de Comando: Sua empresa em Raio-X.
                                 </h2>
-                                <p className="text-lg text-white/60 mb-10 leading-relaxed font-medium">
-                                    Essa é a dor número 1 dos MEIs brasileiros. Sem separação de contas, você nunca sabe quanto realmente está ganhando e quando pode estar no prejuízo.
+                                <p className="text-xl text-white/60 mb-8 leading-relaxed">
+                                    Você nunca mais vai olhar para o extrato do banco sem saber o que é dinheiro seu e o que é dinheiro da empresa.
                                 </p>
-                                <ul className="space-y-6">
-                                    {[
-                                        "Chega de confusão no extrato bancário",
-                                        "Pare de perder tempo anotando em cadernos",
-                                        "Tenha previsibilidade para investir no seu negócio"
-                                    ].map((item, i) => (
-                                        <li key={i} className="flex items-center gap-4 group">
-                                            <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30 group-hover:bg-red-500/30 transition-colors">
-                                                <TrendingDown size={14} className="text-red-400" />
+                                
+                                <ul className="space-y-6 mb-10">
+                                    <li className="flex items-start gap-4">
+                                        <div className="mt-1">
+                                            <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
+                                                <CheckCircle2 size={14} className="text-red-400" />
                                             </div>
-                                            <span className="text-lg font-semibold">{item}</span>
-                                        </li>
-                                    ))}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold">Margem Líquida Real</h4>
+                                            <p className="text-white/50">Saiba o verdadeiro lucro que sobra no seu bolso após as despesas.</p>
+                                        </div>
+                                    </li>
+                                    <li className="flex items-start gap-4">
+                                        <div className="mt-1">
+                                            <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
+                                                <CheckCircle2 size={14} className="text-red-400" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold">Reserva DAS</h4>
+                                            <p className="text-white/50">Provisão automática para você nunca atrasar a guia mensal.</p>
+                                        </div>
+                                    </li>
                                 </ul>
-                            </div>
-                            <div className="relative group transition-all duration-700 hover:-translate-y-8 animate-float [animation-delay:1s]">
-                                <div className="absolute inset-0 bg-red-500/10 blur-[80px] rounded-full scale-90" />
-                                <div className="relative aspect-[9/16] max-w-[320px] mx-auto rounded-[2.5rem] bg-[#0d0d0d] border-[8px] border-white/10 shadow-2xl overflow-hidden transition-all duration-700 group-hover:border-primary/20 group-hover:scale-[1.05]">
-                                    <img
-                                        src="/mobe.png"
-                                        alt="Gestão MEI Mobile"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
 
-                {/* Benefits Section */}
-                <section id="beneficios" className="py-48 relative">
-                    <div className="container mx-auto px-6">
-                        <div className="text-center mb-24">
-                            <h2 className="text-4xl md:text-5xl font-black mb-6">Tudo o que você precisa em um só lugar</h2>
-                            <p className="text-lg text-white/60 max-w-2xl mx-auto font-medium">Funcionalidades pensadas exclusivamente na realidade do Microempreendedor Individual.</p>
-                        </div>
-
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {[
-                                {
-                                    icon: <FileText className="text-primary" size={32} />,
-                                    title: "Relatório DASN (PDF)",
-                                    description: "Gere seu relatório mensal e anual com um clique. Pronto para a declaração oficial da Receita Federal."
-                                },
-                                {
-                                    icon: <TrendingDown className="text-blue-400 rotate-180" size={32} />,
-                                    title: "Limite de R$ 81k",
-                                    description: "Acompanhe seu progresso em tempo real e nunca seja surpreendido pelo limite de faturamento anual do MEI."
-                                },
-                                {
-                                    icon: <LayoutGrid className="text-purple-400" size={32} />,
-                                    title: "Separação de Contas",
-                                    description: "Categorize o que é da empresa e o que é pessoal. Tenha total clareza do seu lucro real de cada mês."
-                                }
-                            ].map((benefit, i) => (
-                                <div key={i} className="group p-8 rounded-3xl bg-white/[0.03] border border-white/5 hover:border-primary/30 transition-all hover:bg-white/[0.05] relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    <div className="mb-6 p-4 rounded-2xl bg-white/5 w-fit group-hover:scale-110 transition-transform">{benefit.icon}</div>
-                                    <h3 className="text-2xl font-black mb-4 group-hover:text-primary transition-colors">{benefit.title}</h3>
-                                    <p className="text-white/60 leading-relaxed font-medium">{benefit.description}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Planos e Preços */}
-                <section id="pricing" className="py-48 bg-white/[0.01]">
-                    <div className="container mx-auto px-6">
-                        <div className="text-center mb-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                            <h2 className="text-4xl md:text-6xl font-black mb-6">Escolha o plano ideal para o seu MEI</h2>
-                            <p className="text-xl text-white/60 max-w-2xl mx-auto font-medium mb-12">
-                                Comece grátis e faça o upgrade conforme seu negócio cresce. Sem pegadinhas.
-                            </p>
-
-                            {/* Toggle Mensal/Anual */}
-                            <div className="flex items-center justify-center gap-4 mb-16">
-                                <span className={`text-sm font-bold ${!isAnnual ? 'text-white' : 'text-white/40'}`}>Mensal</span>
                                 <button
-                                    onClick={() => setIsAnnual(!isAnnual)}
-                                    className="w-16 h-8 bg-white/10 rounded-full relative transition-all border border-white/10"
+                                    onClick={scrollToPricing}
+                                    className="bg-white text-[#0D0D0D] px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/90 transition-colors w-full sm:w-auto"
                                 >
-                                    <div className={`absolute top-1 w-6 h-6 bg-primary rounded-full transition-all shadow-lg shadow-primary/40 ${isAnnual ? 'left-9' : 'left-1'}`} />
+                                    Acessar Painel Demonstração
                                 </button>
-                                <span className={`text-sm font-bold ${isAnnual ? 'text-white' : 'text-white/40'}`}>Anual <span className="text-green-400 text-[10px] ml-1 uppercase tracking-widest bg-green-400/10 px-2 py-0.5 rounded-full">Economize 15%</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 4. Pricing Section */}
+                <section id="planos" className="py-24 border-t border-white/5 scroll-mt-24">
+                    <div className="container mx-auto px-6 max-w-5xl">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl md:text-5xl font-black mb-4">Escolha seu Plano</h2>
+                            <p className="text-lg text-white/50">Comece grátis ou desbloqueie o poder total da Inteligência MEI.</p>
+                        </div>
+
+                        <div className="flex justify-center mb-12">
+                            <div className="bg-[#121212] p-1.5 rounded-xl border border-white/10 flex items-center gap-2">
+                                <button
+                                    onClick={() => setIsAnnual(false)}
+                                    className={`px-6 py-2.5 rounded-lg font-bold transition-all ${!isAnnual ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white'}`}
+                                >
+                                    Mensal
+                                </button>
+                                <button
+                                    onClick={() => setIsAnnual(true)}
+                                    className={`px-6 py-2.5 rounded-lg font-bold transition-all flex items-center gap-2 ${isAnnual ? 'bg-red-600 text-white' : 'text-white/50 hover:text-white'}`}
+                                >
+                                    Anual <span className="text-[10px] bg-red-500/20 text-red-100 px-2 py-1 rounded-full border border-red-500/30 uppercase tracking-widest leading-none">Economize 17%</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                            {/* Plano Básico */}
-                            <div className="p-10 md:p-16 rounded-[40px] bg-white/[0.03] border border-white/5 hover:border-white/10 transition-all flex flex-col relative group overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                                <h3 className="text-2xl font-black mb-2">Plano Básico</h3>
-                                <div className="flex items-baseline gap-1 mb-8">
-                                    <span className="text-5xl font-black">Grátis</span>
-                                </div>
-                                <p className="text-white/40 font-medium mb-10 text-sm">Ideal para quem está começando e quer organizar as primeiras vendas.</p>
-
-                                <ul className="space-y-6 mb-12 flex-1">
-                                    <li className="flex items-center gap-3 text-white/60 font-bold text-sm">
-                                        <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
-                                            <CheckCircle2 size={12} className="text-primary" />
-                                        </div>
-                                        Até 20 lançamentos / mês
-                                    </li>
-                                    <li className="flex items-center gap-3 text-white/60 font-bold text-sm">
-                                        <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
-                                            <CheckCircle2 size={12} className="text-primary" />
-                                        </div>
-                                        Limite de R$ 1.000,00 de movimentação
-                                    </li>
-                                    <li className="flex items-center gap-3 text-white/20 font-bold text-sm line-through decoration-white/20">
-                                        <div className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                                        </div>
-                                        Relatórios DASN em PDF
-                                    </li>
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {/* Grátis */}
+                            <div className="bg-[#121212] border border-white/10 p-10 rounded-3xl flex flex-col">
+                                <h3 className="text-2xl font-bold mb-2">Base</h3>
+                                <div className="text-4xl font-black mb-1">Grátis</div>
+                                <p className="text-white/50 mb-8 border-b border-white/10 pb-8">Controle essencial para o seu dia a dia.</p>
+                                
+                                <ul className="space-y-4 mb-10 flex-1">
+                                    <li className="flex items-center gap-3"><CheckCircle2 className="text-green-500" size={20} /> <span className="text-white/80">Limite de faturamento de até R$ 1.000,00</span></li>
+                                    <li className="flex items-center gap-3"><CheckCircle2 className="text-green-500" size={20} /> <span className="text-white/80">Dashboard Básico</span></li>
+                                    <li className="flex items-center gap-3"><CheckCircle2 className="text-green-500" size={20} /> <span className="text-white/80">Reserva DAS Automática</span></li>
                                 </ul>
-
-                                <button
-                                    onClick={() => handleSubscription('free')}
-                                    className="w-full bg-white/5 hover:bg-white/10 text-white py-5 rounded-2xl font-black text-lg transition-all border border-white/10 active:scale-95"
-                                >
+                                
+                                <button onClick={handleCTA} className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-4 rounded-xl font-bold transition-all">
                                     Começar Grátis
                                 </button>
                             </div>
 
-                            {/* Plano Pro */}
-                            <div className="p-10 md:p-16 rounded-[40px] bg-gradient-to-br from-primary/20 to-blue-600/10 border-2 border-primary shadow-2xl shadow-primary/20 flex flex-col relative group overflow-hidden">
-                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
-                                <div className="absolute top-8 right-8 px-4 py-1.5 bg-primary rounded-full text-[10px] font-black uppercase tracking-[2px] text-white">Recomendado</div>
-
-                                <h3 className="text-2xl font-black mb-2">Plano Pro</h3>
-                                <div className="flex items-baseline gap-1 mb-8">
-                                    <span className="text-2xl font-black text-white/40">R$</span>
-                                    <span className="text-6xl font-black tracking-tighter">{isAnnual ? '197,00' : '19,90'}</span>
-                                    <span className="text-white/40 font-bold">{isAnnual ? '/ano' : '/mês'}</span>
+                            {/* Pro */}
+                            <div className="bg-gradient-to-b from-[#1A1010] to-[#0D0D0D] border border-red-500/30 relative p-10 rounded-3xl flex flex-col shadow-2xl shadow-red-900/20">
+                                <div className="absolute top-0 right-8 -translate-y-1/2 bg-red-600 text-white px-4 py-1 rounded-full text-sm font-bold tracking-wider uppercase">
+                                    Recomendado
                                 </div>
-                                <p className="text-white/60 font-medium mb-10 text-sm">Para o MEI que quer controle total e não quer se preocupar com limites.</p>
-
-                                <ul className="space-y-6 mb-12 flex-1">
-                                    <li className="flex items-center gap-3 text-white/90 font-bold text-sm">
-                                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                                            <CheckCircle2 size={12} className="text-white" />
-                                        </div>
-                                        Lançamentos Ilimitados
-                                    </li>
-                                    <li className="flex items-center gap-3 text-white/90 font-bold text-sm">
-                                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                                            <CheckCircle2 size={12} className="text-white" />
-                                        </div>
-                                        Relatórios DASN e Financeiros
-                                    </li>
-                                    <li className="flex items-center gap-3 text-white/90 font-bold text-sm">
-                                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                                            <CheckCircle2 size={12} className="text-white" />
-                                        </div>
-                                        Controle Ativo de Limite MEI 81k
-                                    </li>
-                                    <li className="flex items-center gap-3 text-white/90 font-bold text-sm">
-                                        <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                                            <CheckCircle2 size={12} className="text-white" />
-                                        </div>
-                                        Suporte Prioritário
-                                    </li>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <Zap className="text-red-500 fill-red-500" size={24} />
+                                    <h3 className="text-2xl font-bold">Elite Pro</h3>
+                                </div>
+                                <div className="text-4xl font-black mb-1 flex items-baseline gap-1">
+                                    {isAnnual ? 'R$ 197,00' : 'R$ 19,90'}
+                                    <span className="text-xl text-white/50 font-normal">/{isAnnual ? 'ano' : 'mês'}</span>
+                                </div>
+                                <p className="text-red-400 mb-8 border-b border-white/10 pb-8">Paz de espírito total para não desenquadrar.</p>
+                                
+                                <ul className="space-y-4 mb-10 flex-1">
+                                    <li className="flex items-center gap-3"><CheckCircle2 className="text-red-500" size={20} /> <span className="text-white font-semibold">Tudo do plano Base</span></li>
+                                    <li className="flex items-center gap-3"><CheckCircle2 className="text-red-500 flex-shrink-0" size={20} /> <span className="text-white font-bold">Inteligência Preditiva (Risco de Desenquadramento)</span></li>
+                                    <li className="flex items-center gap-3"><CheckCircle2 className="text-red-500 flex-shrink-0" size={20} /> <span className="text-white font-bold">Relatório de Auditoria DASN Automático</span></li>
+                                    <li className="flex items-center gap-3"><CheckCircle2 className="text-red-500 flex-shrink-0" size={20} /> <span className="text-white font-bold">Simulador de IRPF</span></li>
+                                    <li className="flex items-center gap-3"><CheckCircle2 className="text-red-500 flex-shrink-0" size={20} /> <span className="text-white font-bold">Upload e Gestão de Comprovantes (Fotos/PDF)</span></li>
                                 </ul>
-
-                                <button
-                                    onClick={() => handleSubscription(isAnnual ? 'price_1T2d6SLjW93jPn5ye6wN7Ptg' : 'price_1T2d6SLjW93jPn5yKFFhiedU')}
-                                    className="w-full bg-primary hover:bg-primary/90 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-primary/40 transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3"
-                                >
-                                    Assinar o Pro
-                                    <Zap size={20} fill="currentColor" />
-                                </button>
+                                
+                                {isPro ? (
+                                    <button onClick={() => navigate('/dashboard')} className="w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white py-4 rounded-xl font-bold transition-all shadow-lg">
+                                        Gerenciar Assinatura
+                                    </button>
+                                ) : (
+                                    <button onClick={handleProCTA} className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-red-600/20">
+                                        Assinar Módulo Elite
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* FAQ Section */}
-                <section id="faq" className="py-48">
+                {/* 5. FAQ Section */}
+                <section className="py-32 bg-white/[0.02]">
                     <div className="container mx-auto px-6 max-w-4xl">
-                        <h2 className="text-4xl md:text-5xl font-black mb-20 text-center">Perguntas Frequentes</h2>
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl md:text-5xl font-black mb-4">Perguntas Frequentes</h2>
+                            <p className="text-lg text-white/50">Elimine suas dúvidas e assuma o controle hoje.</p>
+                        </div>
+
                         <div className="space-y-4">
                             {faqs.map((faq, i) => (
-                                <div key={i} className="border border-white/5 bg-white/[0.02] rounded-2xl overflow-hidden transition-all duration-300">
+                                <div key={i} className="border border-white/10 bg-[#121212] rounded-2xl overflow-hidden transition-all duration-300">
                                     <button
                                         className="w-full px-8 py-6 text-left flex items-center justify-between hover:bg-white/[0.02] transition-colors"
                                         onClick={() => setOpenFaq(openFaq === i ? null : i)}
                                     >
-                                        <span className="text-xl font-bold">{faq.q}</span>
-                                        <ChevronDown className={`transition-transform duration-300 text-primary ${openFaq === i ? 'rotate-180' : ''}`} />
+                                        <span className="text-lg font-bold pr-8">{faq.q}</span>
+                                        <ChevronDown className={`transition-transform duration-300 flex-shrink-0 text-red-500 ${openFaq === i ? 'rotate-180' : ''}`} />
                                     </button>
-                                    <div className={`overflow-hidden transition-all duration-300 ${openFaq === i ? 'max-h-96' : 'max-h-0'}`}>
-                                        <div className="px-8 pb-8 text-white/60 text-lg leading-relaxed font-medium">
+                                    <div className={`overflow-hidden transition-all duration-300 ${openFaq === i ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                                        <div className="px-8 pb-8 text-white/60 leading-relaxed">
                                             {faq.a}
                                         </div>
                                     </div>
@@ -365,55 +411,49 @@ const LandingPage: React.FC = () => {
                     </div>
                 </section>
 
-                {/* CTA Final */}
-                <section className="py-40 relative">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[400px] bg-primary/20 rounded-full blur-[150px] pointer-events-none opacity-50" />
-                    <div className="container mx-auto px-6 relative z-10">
-                        <div className="max-w-4xl mx-auto rounded-[3rem] bg-gradient-to-br from-primary to-blue-600 p-12 md:p-24 text-center shadow-2xl shadow-primary/30 overflow-hidden relative">
-                            <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/20 rounded-full blur-3xl" />
-                            <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-black/20 rounded-full blur-3xl" />
-
-                            <h2 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight relative z-10">
-                                Pronto para profissionalizar seu MEI?
-                            </h2>
-                            <p className="text-xl md:text-2xl text-white/80 mb-12 font-bold relative z-10">
-                                Comece agora e tenha o controle total do seu negócio em minutos.
-                            </p>
-                            <button
-                                onClick={scrollToPricing}
-                                className="group bg-white text-primary hover:bg-white/90 px-12 py-6 rounded-2xl font-black text-2xl shadow-xl transition-all hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 mx-auto relative z-10"
-                            >
-                                Criar Conta Agora
-                                <ArrowRight size={28} className="group-hover:translate-x-1 transition-transform" />
-                            </button>
-                            <p className="mt-8 text-white/60 font-medium relative z-10">Não precisa de cartão de crédito.</p>
-                        </div>
+                {/* Bottom CTA */}
+                <section className="py-24 border-t border-white/5">
+                    <div className="container mx-auto px-6 text-center">
+                        <h2 className="text-3xl md:text-5xl font-black mb-8">Passe para o próximo nível.</h2>
+                        <button
+                            onClick={scrollToPricing}
+                            className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-12 py-5 rounded-2xl font-black text-xl shadow-2xl shadow-red-600/30 transition-all hover:scale-105 active:scale-95 mx-auto flex items-center gap-3"
+                        >
+                            Criar Conta Gratuitamente
+                            <Zap size={20} />
+                        </button>
                     </div>
                 </section>
             </main>
 
             {/* Footer */}
-            <footer className="py-20 border-t border-white/5 relative z-10">
-                <div className="container mx-auto px-6">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-16">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                                <span className="font-black text-[10px] text-white">MEI</span>
-                            </div>
-                            <span className="text-lg font-bold tracking-tight">Gestão<span className="text-primary">MEI</span></span>
-                        </div>
-                        <div className="flex gap-10 text-white/40 font-bold">
-                            <a href="#beneficios" className="hover:text-primary transition-colors">Sobre</a>
-                            <a href="#faq" className="hover:text-primary transition-colors">Ajuda</a>
-                            <Link to="/auth" className="hover:text-primary transition-colors">Acessar</Link>
-                        </div>
+            <footer className="py-12 border-t border-white/10 bg-[#0D0D0D]">
+                <div className="container mx-auto px-6 mb-12 border-b border-white/5 pb-10">
+                    <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-60">
+                         <div className="flex items-center gap-2 text-sm font-semibold tracking-wide">
+                             <Lock size={16} className="text-red-500" /> Criptografia de Dados
+                         </div>
+                         <div className="flex items-center gap-2 text-sm font-semibold tracking-wide">
+                             <Cloud size={16} className="text-red-500" /> Backup Diário
+                         </div>
+                         <div className="flex items-center gap-2 text-sm font-semibold tracking-wide">
+                             <Shield size={16} className="text-red-500" /> Privacidade Garantida
+                         </div>
                     </div>
-                    <div className="flex flex-col md:flex-row items-center justify-between text-white/20 text-sm font-bold pt-8 border-t border-white/5 gap-4">
-                        <p>© 2026 Gestão MEI. Todos os direitos reservados.</p>
-                        <div className="flex gap-8">
-                            <a href="#" className="hover:text-white/40 transition-colors">Termos</a>
-                            <a href="#" className="hover:text-white/40 transition-colors">Privacidade</a>
-                        </div>
+                </div>
+
+                <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold tracking-tight">Gestão<span className="text-red-500">MEI</span> Elite</span>
+                    </div>
+                    <div className="flex flex-col gap-2 md:text-right">
+                        <p className="text-white/40 text-sm font-medium">
+                            © {new Date().getFullYear()} Gestão MEI. Todos os direitos reservados.
+                        </p>
+                        <p className="text-white/30 text-xs flex items-center gap-1 md:justify-end">
+                            <Zap size={10} className="text-yellow-500" />
+                            Possuímos um sistema dedicado de Feedback e Sugestões para melhoria contínua da plataforma.
+                        </p>
                     </div>
                 </div>
             </footer>
@@ -422,3 +462,4 @@ const LandingPage: React.FC = () => {
 };
 
 export default LandingPage;
+
