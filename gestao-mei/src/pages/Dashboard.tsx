@@ -141,8 +141,8 @@ const Dashboard: React.FC = () => {
         if (!user) return;
         try {
             // Salva intenção para evitar que o porteiro bloqueie o redirecionamento
-            localStorage.setItem('pending_purchase_price_id', 'price_1T2d6SLjW93jPn5ye6wN7Ptg');
-            await startStripeCheckout('price_1T2d6SLjW93jPn5ye6wN7Ptg', user.id, user.email || '');
+            localStorage.setItem('pending_purchase_price_id', 'price_1T2cFGLjW93jPn5yJDSCAKev');
+            await startStripeCheckout('price_1T2cFGLjW93jPn5yJDSCAKev', user.id, user.email || '');
         } catch (error) {
             console.error('Erro no checkout Stripe:', error);
         }

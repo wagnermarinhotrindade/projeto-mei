@@ -85,8 +85,9 @@ const Reports: React.FC = () => {
         if (!user) return;
         setCheckoutLoading(true);
         try {
-            // Price ID do Plano Anual (R$ 197)
-            const success = await startStripeCheckout('price_1T2d6SLjW93jPn5ye6wN7Ptg', user.id, user.email || '');
+            // Price ID do Plano Mensal (Gestão MEI - Plano Pro)
+            localStorage.setItem('pending_purchase_price_id', 'price_1T2cFGLjW93jPn5yJDSCAKev');
+            const success = await startStripeCheckout('price_1T2cFGLjW93jPn5yJDSCAKev', user.id, user.email || '');
             if (!success) {
                 setCheckoutLoading(false);
             }

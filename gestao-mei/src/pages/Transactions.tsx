@@ -85,8 +85,8 @@ const Transactions: React.FC = () => {
         setCheckoutLoading(true);
         try {
             // Salva intenção para o Porteiro do Stripe no App.tsx
-            localStorage.setItem('pending_purchase_price_id', 'price_1T2d6SLjW93jPn5ye6wN7Ptg');
-            const success = await startStripeCheckout('price_1T2d6SLjW93jPn5ye6wN7Ptg', user.id, user.email || '');
+            localStorage.setItem('pending_purchase_price_id', 'price_1T2cFGLjW93jPn5yJDSCAKev');
+            const success = await startStripeCheckout('price_1T2cFGLjW93jPn5yJDSCAKev', user.id, user.email || '');
             if (!success) setCheckoutLoading(false);
         } catch (error) {
             setCheckoutLoading(false);

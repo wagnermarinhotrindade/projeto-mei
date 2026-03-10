@@ -91,7 +91,7 @@ const LandingPage: React.FC = () => {
 
     const handleProCTA = async () => {
         // Price ID do Plano Pro (Mensal ou Anual)
-        const priceId = isAnnual ? 'price_1T2d6SLjW93jPn5ye6wN7Ptg' : 'price_1T2d6SLjW93jPn5ye6wN7Pth'; // Exemplo de IDs
+        const priceId = isAnnual ? 'price_1T2cFGLjW93jPn5ym1q6ZEDe' : 'price_1T2cFGLjW93jPn5yJDSCAKev';
 
         if (isLoggedIn) {
             const { data: { user } } = await supabase.auth.getUser();

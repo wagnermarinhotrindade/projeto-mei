@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 export const startStripeCheckout = async (priceId: string, userId: string, userEmail: string) => {
     // 1. QUEBRA DE LOOP: Limpa intenção IMEDIATAMENTE antes de iniciar
     localStorage.removeItem('intentToPurchase');
-    localStorage.removeItem('pendingPriceId');
+    localStorage.removeItem('pending_purchase_price_id');
 
     // 2. BLINDAGEM PLANO FREE: Se o priceId for 'free', não disparar API da Stripe
     if (priceId === 'free') {
