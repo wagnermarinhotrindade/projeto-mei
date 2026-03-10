@@ -28,8 +28,8 @@ const Floating3D = ({ children }: { children: React.ReactNode }) => {
         const y = e.clientY - rect.top;
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
-        const rotateX = (y - centerY) / 20;
-        const rotateY = (centerX - x) / 20;
+        const rotateX = (y - centerY) / 10; // Reduzido para movimento mais suave
+        const rotateY = (centerX - x) / 10;
         setRotate({ x: rotateX, y: rotateY });
     };
 
@@ -42,14 +42,16 @@ const Floating3D = ({ children }: { children: React.ReactNode }) => {
             ref={cardRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="transition-transform duration-200 ease-out"
+            className="transition-all duration-500 ease-out cursor-pointer hover:shadow-red-500/10"
             style={{ 
-                perspective: '1000px',
+                perspective: '1200px',
                 transformStyle: 'preserve-3d',
-                transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`
+                transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg) scale(${rotate.x !== 0 ? 1.02 : 1})`,
             }}
         >
-            {children}
+            <div className="animate-float" style={{ transformStyle: 'preserve-3d' }}>
+                {children}
+            </div>
         </div>
     );
 };

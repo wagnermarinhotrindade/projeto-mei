@@ -32,6 +32,7 @@ import {
     Receipt,
     Tag,
 } from 'lucide-react';
+import { createWorker } from 'tesseract.js';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
 
@@ -74,6 +75,8 @@ const Transactions: React.FC = () => {
     const [checkoutLoading, setCheckoutLoading] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [isOcrLoading, setIsOcrLoading] = useState(false);
+    const [ocrFeedback, setOcrFeedback] = useState<string | null>(null);
 
     const handleUpgrade = async () => {
         if (!user) return;
@@ -197,14 +200,91 @@ const Transactions: React.FC = () => {
         setIsAiLoading(false);
     };
 
+    // --- OCR: Extração de dados do comprovante ---
+    const processarComprovante = async (file: File) => {
+        if (!file.type.startsWith('image/')) return;
+        
+        setIsOcrLoading(true);
+        setOcrFeedback(null);
+        
+        try {
+            const worker = await createWorker('por');
+            const { data: { text } } = await worker.recognize(file);
+            await worker.terminate();
+
+            console.log('Texto extraído:', text);
+
+            // 1. Extrair Valor
+            // Padrões: R$ 123,45 | 123,45 | R$123.45
+            const valorMatch = text.match(/(?:R\$|VALOR|TOTAL|PAGO)\s*[:]?\s*(\d+(?:\.\d{3})*,\d{2})/i) || 
+                               text.match(/(\d+(?:\.\d{3})*,\d{2})/);
+            
+            // 2. Extrair Data
+            // Padrões: 10/10/2023 | 10/10/23
+            const dataMatch = text.match(/(\d{2}\/\d{2}\/\d{2,4})/);
+
+            // 3. Extrair Descrição (Geralmente a primeira linha ou nome fantasia)
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+            let descricao = lines[0]; // Assume que a primeira linha relevante é o nome
+            
+            // Evitar pegar o cabeçalho "CUPOM FISCAL" se possível
+            if (descricao.toUpperCase().includes('CUPOM') || descricao.toUpperCase().includes('COMPROVANTE')) {
+                descricao = lines[1] || descricao;
+            }
+
+            const updates: Partial<FormData> = {};
+            if (valorMatch) updates.valor = valorMatch[1];
+            if (dataMatch) {
+                const parts = dataMatch[1].split('/');
+                const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+                updates.data = `${year}-${parts[1]}-${parts[0]}`;
+            }
+            if (descricao) updates.descricao = descricao;
+
+            // 4. Categorização Inteligente baseada na descrição extraída
+            if (descricao) {
+                const lowerDesc = descricao.toLowerCase();
+                if (lowerDesc.includes('internet') || lowerDesc.includes('vivo') || lowerDesc.includes('claro') || lowerDesc.includes('oi')) {
+                    updates.categoria = 'Internet';
+                    updates.tipo = 'Despesa (Saiu Dinheiro)';
+                } else if (lowerDesc.includes('posto') || lowerDesc.includes('shell') || lowerDesc.includes('ipiranga') || lowerDesc.includes('combustivel')) {
+                    updates.categoria = 'Combustível';
+                    updates.tipo = 'Despesa (Saiu Dinheiro)';
+                } else if (lowerDesc.includes('mercado') || lowerDesc.includes('extra') || lowerDesc.includes('pao de acucar') || lowerDesc.includes('carrefour')) {
+                    updates.categoria = 'Alimentação';
+                    updates.tipo = 'Despesa (Saiu Dinheiro)';
+                } else if (lowerDesc.includes('venda') || lowerDesc.includes('cliente')) {
+                    updates.categoria = 'Venda de Produto';
+                    updates.tipo = 'Receita (Entrou Dinheiro)';
+                }
+            }
+
+            if (Object.keys(updates).length > 0) {
+                setFormData(prev => ({ ...prev, ...updates }));
+                setOcrFeedback('Dados extraídos automaticamente do comprovante. Por favor, revise antes de salvar.');
+                // Limpar feedback após 8 segundos
+                setTimeout(() => setOcrFeedback(null), 8000);
+            }
+
+        } catch (error) {
+            console.error('Erro no processamento OCR:', error);
+        } finally {
+            setIsOcrLoading(false);
+        }
+    };
+
     // --- Upload de comprovante ---
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
         setComprovante(file);
+        
         if (file.type.startsWith('image/')) {
             const reader = new FileReader();
-            reader.onload = (ev) => setUploadPreview(ev.target?.result as string);
+            reader.onload = (ev) => {
+                setUploadPreview(ev.target?.result as string);
+                processarComprovante(file);
+            };
             reader.readAsDataURL(file);
         } else {
             setUploadPreview(null);
@@ -536,6 +616,19 @@ const Transactions: React.FC = () => {
                         <div className="bg-white/[0.02] border border-white/5 p-6 md:p-12 rounded-[40px] shadow-2xl relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-primary/5 via-transparent to-transparent opacity-50 pointer-events-none" />
 
+                            {/* Alerta de OCR */}
+                            {ocrFeedback && (
+                                <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2 relative z-20">
+                                    <Sparkles className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                                    <p className="text-sm text-blue-200 leading-relaxed">
+                                        {ocrFeedback}
+                                    </p>
+                                    <button onClick={() => setOcrFeedback(null)} className="ml-auto p-1 hover:bg-white/10 rounded-lg transition-colors">
+                                        <X className="w-4 h-4 text-blue-400/50 hover:text-blue-400" />
+                                    </button>
+                                </div>
+                            )}
+
                             <form onSubmit={handleSave} className="relative z-10 space-y-8 md:space-y-12">
                                 {/* Type Toggle */}
                                 <div className="flex justify-center">
@@ -677,47 +770,55 @@ const Transactions: React.FC = () => {
                                         <p className="text-[10px] font-black text-white/20 uppercase tracking-[3px] mb-3 flex items-center gap-2">
                                             <Upload size={12} /> COMPROVANTE (OPCIONAL)
                                         </p>
-                                        <div>
-                                            <label className={`flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed cursor-pointer transition-all ${comprovante ? 'border-primary/40 bg-primary/5' : 'border-white/10 bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04]'}`}>
-                                                <input
-                                                    type="file"
-                                                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                                                    className="hidden"
-                                                    onChange={handleFileChange}
-                                                />
-                                                {uploadPreview ? (
-                                                    <div className="relative group">
-                                                        <img src={uploadPreview} alt="Preview" className="h-24 w-auto rounded-2xl object-cover border border-white/10" />
-                                                        <div className="absolute inset-0 bg-green-500/20 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <Check size={24} className="text-white" />
+                                                <div>
+                                                    <label className={`flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed cursor-pointer transition-all ${comprovante ? 'border-primary/40 bg-primary/5' : 'border-white/10 bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04]'}`}>
+                                                        <input
+                                                            type="file"
+                                                            onChange={handleFileChange}
+                                                            accept="image/*,.pdf"
+                                                            className="hidden"
+                                                        />
+                                                        {uploadPreview ? (
+                                                            <div className="relative group">
+                                                                <img src={uploadPreview} alt="Preview" className="h-24 w-auto rounded-2xl object-cover border border-white/10" />
+                                                                <div className="absolute inset-0 bg-green-500/20 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <Check size={24} className="text-white" />
+                                                                </div>
+                                                                <p className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-green-400 font-black uppercase tracking-widest whitespace-nowrap">Upload Pronto</p>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                <Upload size={20} className="text-white/30" />
+                                                                <span className="text-white/40 text-sm font-bold">
+                                                                    {comprovante ? comprovante.name : 'Arraste ou clique para enviar (JPG, PNG ou PDF)'}
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </label>
+
+                                                    {isOcrLoading && (
+                                                        <div className="mt-3 flex items-center gap-3 px-4 py-3 bg-primary/5 border border-primary/10 rounded-2xl animate-pulse">
+                                                            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                                                            <span className="text-[10px] font-black text-primary uppercase tracking-[2px]">Analisando comprovante com IA...</span>
                                                         </div>
-                                                        <p className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-green-400 font-black uppercase tracking-widest whitespace-nowrap">Upload Pronto</p>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <Upload size={20} className="text-white/30" />
-                                                        <span className="text-white/40 text-sm font-bold">
-                                                            {comprovante ? comprovante.name : 'Arraste ou clique para enviar (JPG, PNG ou PDF)'}
-                                                        </span>
-                                                    </>
-                                                )}
-                                            </label>
-                                            {comprovante && (
-                                                <div className="flex items-center gap-4 mt-4 ml-2">
-                                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg">
-                                                        <Check size={12} className="text-green-400" />
-                                                        <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Arquivo Selecionado</span>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => { setComprovante(null); setUploadPreview(null); }}
-                                                        className="text-[10px] text-red-400/60 hover:text-red-400 font-bold transition-colors"
-                                                    >
-                                                        Remover
-                                                    </button>
+                                                    )}
+
+                                                    {comprovante && !isOcrLoading && (
+                                                        <div className="flex items-center gap-4 mt-4 ml-2">
+                                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                                                <Check size={12} className="text-green-400" />
+                                                                <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Arquivo Selecionado</span>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => { setComprovante(null); setUploadPreview(null); }}
+                                                                className="text-[10px] text-red-400/60 hover:text-red-400 font-bold transition-colors"
+                                                            >
+                                                                Remover
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
                                     </div>
                                 )}
 
