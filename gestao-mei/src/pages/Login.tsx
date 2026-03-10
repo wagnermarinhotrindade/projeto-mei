@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import SEO from '../components/layout/SEO';
 
 const Login: React.FC = () => {
     const [isLogin, setIsLogin] = useState(true);
@@ -95,6 +96,8 @@ const Login: React.FC = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4 font-manrope text-white">
+            <SEO title={isLogin ? "Entrar" : "Criar Conta"} description="Acesse sua conta Gestão MEI ou cadastre-se para automatizar seu livro caixa e faturamento." />
+            
             <div className="w-full max-w-md bg-white/5 border border-white/10 p-8 rounded-xl backdrop-blur-sm">
                 <div className="flex justify-center mb-8">
                     <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 text-white font-bold text-2xl">

@@ -6,6 +6,7 @@ import { startStripeCheckout } from '../lib/stripe';
 import FiscalHealthCard from '../components/dashboard/FiscalHealthCard';
 import DASCountdown from '../components/dashboard/DASCountdown';
 import PredictiveChart from '../components/dashboard/PredictiveChart';
+import SEO from '../components/layout/SEO';
 
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -150,6 +151,7 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
+            <SEO title="Painel de Controle" description="Gerencie seu faturamento, lucro e obrigações MEI em um só lugar." />
             {showWelcomeModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-[#1A1A1A] border border-red-500/30 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 mt-10">

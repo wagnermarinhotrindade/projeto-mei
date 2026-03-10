@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
+import SEO from '../components/layout/SEO';
 
 const Floating3D = ({ children }: { children: React.ReactNode }) => {
     const [rotate, setRotate] = useState({ x: 0, y: 0 });
@@ -81,6 +82,27 @@ const LandingPage: React.FC = () => {
         checkAuth();
     }, []);
 
+    const softwareSchema = {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Gestão MEI Elite",
+        "operatingSystem": "Web",
+        "applicationCategory": "BusinessApplication",
+        "description": "Automação de livro caixa, controle de faturamento e relatórios DASN para MEI.",
+        "offers": {
+            "@type": "Offer",
+            "price": "0.00",
+            "priceCurrency": "BRL"
+        },
+        "featureList": [
+            "Controle Financeiro Automático",
+            "OCR de Comprovantes",
+            "Radar de Faturamento MEI",
+            "Simulador de IRPF",
+            "Relatórios DASN em um clique"
+        ]
+    };
+
     const handleCTA = () => {
         if (isLoggedIn) {
             navigate('/dashboard');
@@ -135,6 +157,13 @@ const LandingPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#0D0D0D] text-white font-sans selection:bg-red-500/30 overflow-x-hidden">
+            <SEO />
+            
+            {/* JSON-LD Schema */}
+            <script type="application/ld+json">
+                {JSON.stringify(softwareSchema)}
+            </script>
+
             {/* Header */}
             <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0D0D0D]/80 backdrop-blur-md">
                 <div className="container mx-auto px-6 py-4 flex items-center justify-between">
@@ -246,7 +275,12 @@ const LandingPage: React.FC = () => {
                         <Floating3D>
                             <div className="max-w-5xl mx-auto rounded-2xl bg-[#1A1A1A] border border-white/10 p-2 shadow-2xl relative group overflow-hidden">
                                  <div className="absolute inset-0 bg-red-600/20 blur-[100px] rounded-full scale-75 group-hover:bg-red-600/30 transition-colors" />
-                                 <img src="/relatorio mei .PNG" alt="Relatório DASN-Elite" className="w-full h-auto rounded-xl border border-white/5 relative z-10 opacity-90 group-hover:opacity-100 transition-opacity" />
+                                 <img 
+                                    src="/relatorio mei .PNG" 
+                                    alt="Interface do Relatório DASN-Elite do Gestão MEI com separação automática de faturamento por categoria fiscal" 
+                                    className="w-full h-auto rounded-xl border border-white/5 relative z-10 opacity-90 group-hover:opacity-100 transition-opacity" 
+                                    loading="lazy"
+                                />
                             </div>
                         </Floating3D>
                     </div>
@@ -263,8 +297,9 @@ const LandingPage: React.FC = () => {
                                         <div className="relative rounded-2xl bg-[#1A1A1A] border border-white/10 p-2 shadow-2xl">
                                             <img 
                                                 src="/deshboard.PNG" 
-                                                alt="Central de Comando exibindo R$ 888,00 e Radar 1.1%" 
+                                                alt="Interface do Dashboard Gestão MEI com controle de lucro real de R$ 888,00 e radar preditivo de faturamento" 
                                                 className="w-full h-auto rounded-xl border border-white/5 opacity-90 group-hover:opacity-100 transition-opacity"
+                                                loading="lazy"
                                             />
                                         </div>
                                     </div>

@@ -1,12 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Eye, Lock, Database, Cookie } from 'lucide-react';
+import SEO from '../components/layout/SEO';
 
 const Privacy: React.FC = () => {
     const navigate = useNavigate();
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white font-manrope selection:bg-primary/30">
+            <SEO title="Política de Privacidade" description="Saiba como o Gestão MEI protege seus dados financeiros e pessoais em conformidade com a LGPD." />
             {/* Header / Nav */}
             <div className="sticky top-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/5">
                 <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">

@@ -16,6 +16,7 @@ import {
     Lock,
     Sparkles
 } from 'lucide-react';
+import SEO from '../components/layout/SEO';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -353,6 +354,8 @@ const Reports: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <SEO title="Impostos e Relatórios" description="Controle seu faturamento MEI, simule IRPF e gere relatórios DASN automáticos." />
 
             <div className={`space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 ${!isPro ? 'opacity-20 pointer-events-none filter blur-[2px]' : ''}`}>
                 {/* Header Area */}

@@ -4,4 +4,21 @@ Disallow: /dashboard
 Disallow: /dashboard/
 Disallow: /auth
 Disallow: /auth/
+
+# AI Crawlers
+User-agent: GPTBot
+Allow: /
+Disallow: /dashboard
+Disallow: /auth
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /dashboard
+Disallow: /auth
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /dashboard
+Disallow: /auth
+
 Sitemap: https://meigestao.app.br/sitemap.xml
