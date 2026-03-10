@@ -29,7 +29,9 @@ const AppLayout: React.FC = () => {
 
     const handleUpgrade = () => {
         if (user) {
-            startStripeCheckout('price_1T2d6SLjW93jPn5yKFFhiedU', user.id, user.email || '');
+            // Salva intenção para o Porteiro do Stripe no App.tsx
+            localStorage.setItem('pending_purchase_price_id', 'price_1T2cFGLjW93jPn5yJDSCAKev');
+            startStripeCheckout('price_1T2cFGLjW93jPn5yJDSCAKev', user.id, user.email || '');
         }
     };
 
@@ -64,10 +66,10 @@ const AppLayout: React.FC = () => {
                 {!isPro && (
                     <button
                         onClick={handleUpgrade}
-                        className="fixed bottom-8 right-8 z-[100] bg-primary hover:bg-primary/90 text-white font-black px-6 py-4 rounded-2xl shadow-2xl shadow-primary/40 flex items-center gap-3 transition-all hover:scale-105 active:scale-95 animate-bounce-subtle"
+                        className="fixed bottom-8 right-8 z-[100] bg-gradient-to-r from-primary to-[#ff8c7a] hover:brightness-110 text-white font-black px-6 py-4 rounded-2xl shadow-[0_20px_50px_rgba(255,107,87,0.3)] flex items-center gap-3 transition-all hover:scale-105 active:scale-95 animate-pulse-subtle"
                     >
                         <Zap size={20} fill="currentColor" className="text-white" />
-                        <span>⚡ Fazer Upgrade</span>
+                        <span className="uppercase tracking-widest text-xs">⚡ Fazer Upgrade</span>
                     </button>
                 )}
             </main>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Wallet, Loader2, ArrowUpRight, BarChart2, HelpCircle, Zap, Lock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Loader2, ArrowUpRight, BarChart2, HelpCircle, Zap, Lock, Sparkles } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
@@ -250,18 +250,21 @@ const Dashboard: React.FC = () => {
                     <div className="h-[300px] w-full relative group">
                         {!isPro && (
                             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
-                                <div className="absolute inset-0 bg-[#0D0D0D]/40 backdrop-blur-[6px] rounded-2xl" />
+                                <div className="absolute inset-0 bg-[#121212]/80 backdrop-blur-[12px] rounded-2xl border border-white/5" />
                                 <div className="relative z-30">
-                                    <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary mx-auto mb-4 border border-primary/20">
-                                        <Lock size={20} />
+                                    <div className="w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4 border border-primary/20 shadow-xl shadow-primary/10">
+                                        <Lock size={24} />
                                     </div>
-                                    <h4 className="text-white font-black mb-1">Radar Preditivo (Pro)</h4>
-                                    <p className="text-white/60 text-[10px] font-bold mb-4 max-w-[200px] mx-auto uppercase tracking-wider">Preveja exatamente o mês que você vai desenquadrar.</p>
+                                    <h4 className="text-white font-black mb-1 text-lg">Radar Preditivo Pro</h4>
+                                    <p className="text-white/40 text-[10px] font-bold mb-6 max-w-[220px] mx-auto uppercase tracking-widest leading-relaxed">
+                                        Preveja exatamente o mês que você vai desenquadrar do MEI.
+                                    </p>
                                     <button 
                                         onClick={handleUpgrade}
-                                        className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-xl text-[10px] font-black transition-all shadow-lg"
+                                        className="bg-gradient-to-r from-primary to-[#ff8c7a] hover:brightness-110 text-white px-8 py-3 rounded-xl text-xs font-black transition-all shadow-[0_10px_30px_rgba(255,107,87,0.3)] active:scale-95 flex items-center gap-2 mx-auto"
                                     >
-                                        DESBLOQUEAR AGORA
+                                        <Zap size={14} fill="currentColor" />
+                                        DESBLOQUEAR ACESSO
                                     </button>
                                 </div>
                             </div>
@@ -274,21 +277,21 @@ const Dashboard: React.FC = () => {
                 {/* Card de Saúde Fiscal com Bloqueio Pro */}
                 <div className="relative">
                     {!isPro && (
-                        <div className="absolute inset-x-4 inset-y-8 z-20 flex flex-col items-center justify-center p-6 text-center">
-                             <div className="absolute inset-0 bg-[#0D0D0D]/40 backdrop-blur-[6px] rounded-[32px]" />
+                        <div className="absolute inset-x-2 inset-y-4 z-20 flex flex-col items-center justify-center p-6 text-center">
+                             <div className="absolute inset-0 bg-[#121212]/80 backdrop-blur-[12px] rounded-[32px] border border-white/5" />
                              <div className="relative z-30">
-                                 <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary mx-auto mb-4 border border-primary/20">
-                                     <Zap size={18} fill="currentColor" />
+                                 <div className="w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4 border border-primary/20 shadow-xl shadow-primary/10">
+                                     <Sparkles size={24} />
                                  </div>
-                                 <h4 className="text-white font-black mb-1 text-sm">Simulador IRPF</h4>
-                                 <p className="text-white/50 text-[10px] font-bold mb-4 uppercase tracking-widest leading-relaxed">
+                                 <h4 className="text-white font-black mb-1 text-lg">Simulador IRPF</h4>
+                                 <p className="text-white/40 text-[10px] font-bold mb-6 uppercase tracking-widest leading-relaxed">
                                      Saiba quanto do seu lucro é isento<br/>e proteja seu patrimônio.
                                  </p>
                                  <button 
                                      onClick={handleUpgrade}
-                                     className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl text-[10px] font-black transition-all shadow-lg shadow-primary/20"
+                                     className="bg-gradient-to-r from-primary to-[#ff8c7a] hover:brightness-110 text-white px-8 py-3 rounded-xl text-xs font-black transition-all shadow-[0_10px_30px_rgba(255,107,87,0.3)] active:scale-95"
                                  >
-                                     LIBERAR ACESSO
+                                     LIBERAR AGORA
                                  </button>
                              </div>
                         </div>

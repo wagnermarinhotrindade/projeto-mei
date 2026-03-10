@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Calendar,
     FilePlus,
@@ -12,7 +13,8 @@ import {
     FileText,
     Zap,
     HelpCircle,
-    Lock
+    Lock,
+    Sparkles
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
@@ -21,6 +23,7 @@ import autoTable from 'jspdf-autotable';
 import { startStripeCheckout } from '../lib/stripe';
 
 const Reports: React.FC = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -81,13 +84,13 @@ const Reports: React.FC = () => {
         return () => window.removeEventListener('focus', handleFocus);
     }, []);
 
-    const handleUpgrade = async () => {
+    const handleUpgrade = async (priceId: string = 'price_1T2cFGLjW93jPn5yJDSCAKev') => {
         if (!user) return;
         setCheckoutLoading(true);
         try {
-            // Price ID do Plano Mensal (Gestão MEI - Plano Pro)
-            localStorage.setItem('pending_purchase_price_id', 'price_1T2cFGLjW93jPn5yJDSCAKev');
-            const success = await startStripeCheckout('price_1T2cFGLjW93jPn5yJDSCAKev', user.id, user.email || '');
+            // Price ID do Plano Pro (Mensal ou Anual)
+            localStorage.setItem('pending_purchase_price_id', priceId);
+            const success = await startStripeCheckout(priceId, user.id, user.email || '');
             if (!success) {
                 setCheckoutLoading(false);
             }
@@ -298,32 +301,53 @@ const Reports: React.FC = () => {
 
     return (
         <div className="relative">
-            {/* Bloqueio Premium para Usuários Free */}
+            {/* Bloqueio Premium para Usuários Free - REDESIGN PREMIUM */}
             {!isPro && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center px-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm rounded-[40px]" />
-                    <div className="relative bg-[#1a1a1a] border border-primary/30 p-10 md:p-16 rounded-[40px] shadow-2xl shadow-primary/20 text-center max-w-2xl animate-in zoom-in-95 duration-500 group">
-                        <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center text-primary mx-auto mb-8 border border-primary/20 group-hover:scale-110 transition-transform">
-                            {checkoutLoading ? <Loader2 className="animate-spin" size={40} /> : <Zap size={40} fill="currentColor" />}
-                        </div>
-                        <h2 className="text-3xl md:text-4xl font-black mb-6">Desbloqueie o Gestão MEI por 1 ano!</h2>
-                        <p className="text-lg text-white/60 mb-10 leading-relaxed">
-                            Organize seu MEI como um profissional o ano inteiro. Assine o <span className="text-white font-bold">Plano Pro Anual por R$ 197,00</span> e tenha relatórios DASN em PDF, lançamentos ilimitados, controle do limite de 81k e suporte prioritário.
-                        </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div className="absolute inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-700">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md rounded-[40px]" />
+                    <div className="relative bg-[#121212] border border-white/10 p-10 md:p-16 rounded-[40px] shadow-[0_0_100px_rgba(0,0,0,0.8)] text-center max-w-2xl overflow-hidden group">
+                        {/* Glow effects */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+                        
+                        <div className="relative z-10">
+                            <div className="w-24 h-24 bg-gradient-to-br from-primary/30 to-primary/5 rounded-[30px] flex items-center justify-center text-primary mx-auto mb-8 border border-primary/20 shadow-2xl shadow-primary/20 group-hover:scale-105 transition-all duration-500">
+                                {checkoutLoading ? <Loader2 className="animate-spin" size={48} /> : <Zap size={48} fill="currentColor" />}
+                            </div>
+                            
+                            <h2 className="text-3xl md:text-5xl font-black mb-6 text-white tracking-tighter">Desbloqueie o Gestão MEI Pro</h2>
+                            <p className="text-lg text-white/50 mb-12 leading-relaxed font-medium">
+                                Organize seu MEI como um profissional o ano inteiro. <br/>
+                                <span className="text-white">Assine o Plano Pro</span> e tenha relatórios DASN em PDF, lançamentos ilimitados e radar de faturamento.
+                            </p>
+                            
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                                <button
+                                    onClick={() => handleUpgrade('price_1T2cFGLjW93jPn5ym1q6ZEDe')}
+                                    disabled={checkoutLoading}
+                                    className="w-full sm:w-auto bg-gradient-to-r from-primary to-[#ff8c7a] hover:brightness-110 text-white px-12 py-5 rounded-2xl font-black text-lg transition-all hover:scale-105 shadow-2xl shadow-primary/30 flex items-center justify-center gap-3 uppercase tracking-widest"
+                                >
+                                    {checkoutLoading ? <Loader2 className="animate-spin" size={24} /> : (
+                                        <>
+                                            <span>Plano Anual (R$ 197)</span>
+                                            <Sparkles size={20} />
+                                        </>
+                                    )}
+                                </button>
+                                
+                                <button
+                                    onClick={() => handleUpgrade('price_1T2cFGLjW93jPn5yJDSCAKev')}
+                                    disabled={checkoutLoading}
+                                    className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white font-bold px-10 py-5 rounded-2xl text-lg transition-all border border-white/5"
+                                >
+                                    {checkoutLoading ? <Loader2 className="animate-spin" size={24} /> : 'Mensal R$ 19,90'}
+                                </button>
+                            </div>
+                            
                             <button
-                                onClick={handleUpgrade}
-                                disabled={checkoutLoading}
-                                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white px-10 py-5 rounded-2xl font-black text-lg transition-all hover:-translate-y-1 shadow-xl shadow-primary/30 flex items-center justify-center gap-2"
+                                onClick={() => navigate('/dashboard')}
+                                className="mt-10 text-white/30 hover:text-white/60 text-xs font-bold uppercase tracking-widest transition-all"
                             >
-                                {checkoutLoading ? <Loader2 className="animate-spin" size={24} /> : 'Assinar Anual (R$ 197)'}
-                            </button>
-                            <button
-                                onClick={() => window.location.href = '/dashboard'}
-                                disabled={checkoutLoading}
-                                className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white/60 hover:text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all"
-                            >
-                                Agora não
+                                Voltar para o Dashboard
                             </button>
                         </div>
                     </div>
@@ -442,14 +466,21 @@ const Reports: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="md:col-span-2 lg:col-span-2 bg-white/[0.04] border border-white/10 p-8 rounded-[32px] relative overflow-hidden group flex flex-col items-center justify-center text-center min-h-[300px]">
-                             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-50" />
-                             <Lock size={48} className="text-primary/80 mb-4 animate-in zoom-in group-hover:scale-110 transition-transform" />
-                             <h3 className="text-2xl font-black text-white mb-2">Simulador IRPF</h3>
-                             <p className="text-white/60 mb-6 max-w-sm">Saiba exatamente quanto do seu faturamento MEI é isento e quanto deve ser declarado no IRPF Pessoa Física.</p>
-                             <button onClick={handleUpgrade} className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-xl font-black transition-all shadow-lg shadow-primary/20">
-                                 Desbloquear Recurso
-                             </button>
+                        <div className="md:col-span-2 lg:col-span-2 bg-[#121212] border border-white/5 p-8 rounded-[32px] relative overflow-hidden group flex flex-col items-center justify-center text-center min-h-[300px]">
+                             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-30" />
+                             <div className="relative z-10">
+                                 <div className="w-14 h-14 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4 border border-primary/20 shadow-xl shadow-primary/10 group-hover:scale-110 transition-transform duration-500">
+                                     <Sparkles size={24} />
+                                 </div>
+                                 <h3 className="text-2xl font-black text-white mb-2">Simulador IRPF</h3>
+                                 <p className="text-white/40 text-[10px] font-bold mb-6 max-w-sm mx-auto uppercase tracking-widest leading-relaxed">Proteja seu patrimônio sabendo exatamente o que declarar.</p>
+                                 <button 
+                                     onClick={() => handleUpgrade()} 
+                                     className="bg-gradient-to-r from-primary to-[#ff8c7a] hover:brightness-110 text-white px-8 py-3 rounded-xl font-black transition-all shadow-[0_10px_30px_rgba(255,107,87,0.3)] active:scale-95"
+                                 >
+                                     Desbloquear Recurso
+                                 </button>
+                             </div>
                         </div>
                     )}
                 </div>

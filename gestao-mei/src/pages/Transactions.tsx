@@ -80,13 +80,13 @@ const Transactions: React.FC = () => {
     const [isOcrLoading, setIsOcrLoading] = useState(false);
     const [ocrFeedback, setOcrFeedback] = useState<string | null>(null);
 
-    const handleUpgrade = async () => {
+    const handleUpgrade = async (priceId: string = 'price_1T2cFGLjW93jPn5yJDSCAKev') => {
         if (!user) return;
         setCheckoutLoading(true);
         try {
             // Salva intenção para o Porteiro do Stripe no App.tsx
-            localStorage.setItem('pending_purchase_price_id', 'price_1T2cFGLjW93jPn5yJDSCAKev');
-            const success = await startStripeCheckout('price_1T2cFGLjW93jPn5yJDSCAKev', user.id, user.email || '');
+            localStorage.setItem('pending_purchase_price_id', priceId);
+            const success = await startStripeCheckout(priceId, user.id, user.email || '');
             if (!success) setCheckoutLoading(false);
         } catch (error) {
             setCheckoutLoading(false);
@@ -519,7 +519,7 @@ const Transactions: React.FC = () => {
                 </div>
                 {isLimitReached ? (
                     <button
-                        onClick={handleUpgrade}
+                        onClick={() => handleUpgrade()}
                         className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-black px-8 py-3 rounded-2xl shadow-xl shadow-red-600/20 flex flex-col items-center justify-center transition-all active:scale-95 group text-sm relative overflow-hidden"
                     >
                         <span className="flex items-center gap-2 z-10"><Lock size={16} /> Limite de R$ 1000 atingido.</span>
@@ -988,33 +988,56 @@ const Transactions: React.FC = () => {
                 </div>
             )}
 
-            {/* LIMIT REACHED MODAL */}
+            {/* LIMIT REACHED MODAL - REDESIGNED PRO PREMIUM */}
             {isLimitModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 font-manrope">
-                    <div className="w-full max-w-md bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-[40px] p-10 text-center shadow-2xl relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                        <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center text-primary mx-auto mb-8 border border-primary/20 group-hover:scale-110 transition-transform">
-                            {checkoutLoading ? <Loader2 className="animate-spin" size={40} /> : <Zap size={40} fill="currentColor" />}
-                        </div>
-                        <h2 className="text-3xl font-black mb-4">Limite Atingido!</h2>
-                        <p className="text-white/60 font-medium mb-10 leading-relaxed text-sm">
-                            {limitReason} 🚀 <span className="text-white">Desbloqueie o Gestão MEI por 1 ano</span> e profissionalize seu negócio com lançamentos ilimitados, upload de comprovantes, relatórios DASN e suporte prioritário por apenas <span className="text-white font-bold text-lg block mt-2">R$ 197,00</span>
-                        </p>
-                        <div className="space-y-4">
-                            <button
-                                onClick={handleUpgrade}
-                                disabled={checkoutLoading}
-                                className="w-full bg-primary hover:bg-primary/90 text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/20 transition-all active:scale-95 text-lg uppercase tracking-widest flex items-center justify-center gap-2"
-                            >
-                                {checkoutLoading ? <Loader2 className="animate-spin" size={20} /> : 'Assinar Anual (R$ 197)'}
-                            </button>
-                            <button
-                                onClick={() => setIsLimitModalOpen(false)}
-                                disabled={checkoutLoading}
-                                className="w-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white py-5 rounded-2xl font-bold transition-all text-sm"
-                            >
-                                Agora não
-                            </button>
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-4 font-manrope animate-in fade-in zoom-in duration-300">
+                    <div className="w-full max-w-md bg-[#121212] border border-white/10 rounded-[40px] p-10 text-center shadow-[0_0_100px_rgba(0,0,0,0.8)] relative overflow-hidden group">
+                        {/* Premium Glow Effects */}
+                        <div className="absolute top-0 left-1/4 w-40 h-40 bg-primary/20 rounded-full blur-[80px] -translate-y-1/2" />
+                        <div className="absolute bottom-0 right-1/4 w-40 h-40 bg-primary/10 rounded-full blur-[80px] translate-y-1/2" />
+                        
+                        <div className="relative z-10">
+                            <div className="w-24 h-24 bg-gradient-to-br from-primary/30 to-primary/5 rounded-[30px] flex items-center justify-center text-primary mx-auto mb-10 border border-primary/20 shadow-2xl shadow-primary/20 group-hover:scale-105 transition-all duration-500">
+                                {checkoutLoading ? <Loader2 className="animate-spin" size={48} /> : <Sparkles size={48} className="animate-pulse" />}
+                            </div>
+
+                            <h2 className="text-3xl font-black mb-4 text-white tracking-tight">Evolua para o Pro</h2>
+                            <p className="text-white/60 font-medium mb-10 leading-relaxed text-sm px-4">
+                                {limitReason} <br/><br/>
+                                <span className="text-white">Desbloqueie o Gestão MEI por 1 ano</span> e profissionalize seu negócio com lançamentos ilimitados, radar preditivo e suporte prioritário.
+                                <span className="text-white font-black text-xl block mt-4 tracking-tighter shadow-primary/10">Só R$ 197,00 / ano</span>
+                            </p>
+
+                            <div className="space-y-4">
+                                <button
+                                    onClick={() => handleUpgrade('price_1T2cFGLjW93jPn5ym1q6ZEDe')}
+                                    disabled={checkoutLoading}
+                                    className="w-full bg-gradient-to-r from-primary to-[#ff8c7a] hover:brightness-110 text-white font-black py-5 rounded-2xl shadow-2xl shadow-primary/30 transition-all active:scale-95 text-lg uppercase tracking-widest flex items-center justify-center gap-2 group/btn"
+                                >
+                                    {checkoutLoading ? <Loader2 className="animate-spin" size={24} /> : (
+                                        <>
+                                            <span>Assinar Anual</span>
+                                            <Zap size={20} fill="currentColor" className="group-hover/btn:translate-x-1 transition-transform" />
+                                        </>
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={() => handleUpgrade('price_1T2cFGLjW93jPn5yJDSCAKev')}
+                                    disabled={checkoutLoading}
+                                    className="w-full bg-white/5 hover:bg-white/10 text-white font-bold py-5 rounded-2xl transition-all text-sm border border-white/5"
+                                >
+                                    {checkoutLoading ? <Loader2 className="animate-spin" size={20} /> : 'Plano Mensal (R$ 19,90)'}
+                                </button>
+
+                                <button
+                                    onClick={() => setIsLimitModalOpen(false)}
+                                    disabled={checkoutLoading}
+                                    className="w-full text-white/30 hover:text-white/60 py-2 transition-all text-xs font-bold uppercase tracking-widest"
+                                >
+                                    Agora não, obrigado
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
