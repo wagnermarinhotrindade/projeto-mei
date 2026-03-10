@@ -227,7 +227,8 @@ const Transactions: React.FC = () => {
             const bancos = ['NUBANK', 'ITAU', 'BRADESCO', 'SANTANDER', 'INTER', 'C6', 'BANCO DO BRASIL', 'CAIXA ECONÔMICA'];
             const isBanco = bancos.some(b => upperText.includes(b));
 
-            if (upperText.includes('COMPROVANTE DE PAGAMENTO') || isBanco) {
+            if (upperText.includes('COMPROVANTE DE PAGAMENTO') || upperText.includes('COMPROVANTE DE TRANSFERENCIA') || isBanco) {
+                // REGRA DE OURO: Se é comprovante de banco ou pagamento, é DESPESA
                 updates.tipo = 'Despesa (Saiu Dinheiro)';
             }
 
@@ -356,14 +357,16 @@ const Transactions: React.FC = () => {
         if (!user) return;
         setIsSubmitting(true);
 
-        // Verificação de plano
+        // Verificação de plano COM STATUS ATIVO
         const { data: profile } = await supabase
             .from('users_profile')
-            .select('plano')
+            .select('plano, plan_status')
             .eq('id', user.id)
             .single();
 
-        const userIsPro = profile?.plano === 'pro';
+        const isActive = profile?.plan_status === 'active' || profile?.plan_status === 'pro';
+        const isProPlan = ['pro', 'elite', 'elite_pro'].includes(profile?.plano || '');
+        const userIsPro = isActive && isProPlan;
 
         if (!userIsPro) {
             const { count } = await supabase

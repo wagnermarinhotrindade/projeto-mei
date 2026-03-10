@@ -14,6 +14,7 @@ import Feedback from './pages/Feedback';
 import AppLayout from './components/layout/AppLayout';
 import LandingPage from './pages/LandingPage';
 import AuthCallback from './pages/AuthCallback';
+import PaymentError from './pages/PaymentError';
 
 // Component to handle Pixel PageViews on route change
 const FacebookPixelTracker = () => {
@@ -124,6 +125,7 @@ function App() {
                     element={!session ? <Login /> : <Navigate to="/dashboard" replace />}
                 />
                 <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="/payment-error" element={<PaymentError />} />
 
                 <Route element={session ? <AppLayout /> : <Navigate to="/auth" replace />}>
                     <Route path="/dashboard" element={<Dashboard />} />
