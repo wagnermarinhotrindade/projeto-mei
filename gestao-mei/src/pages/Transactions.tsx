@@ -31,6 +31,7 @@ import {
     Stethoscope,
     Receipt,
     Tag,
+    HelpCircle,
 } from 'lucide-react';
 import { createWorker } from 'tesseract.js';
 import { supabase } from '../lib/supabase';
@@ -68,6 +69,7 @@ const Transactions: React.FC = () => {
     const [uploadPreview, setUploadPreview] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showHelpModal, setShowHelpModal] = useState(false);
     const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
     const [limitReason, setLimitReason] = useState('');
     const [user, setUser] = useState<any>(null);
@@ -852,6 +854,14 @@ const Transactions: React.FC = () => {
                                     <div>
                                         <p className="text-[10px] font-black text-white/20 uppercase tracking-[3px] mb-3 flex items-center gap-2">
                                             <Upload size={12} /> COMPROVANTE (OPCIONAL)
+                                            <button 
+                                                type="button"
+                                                onClick={() => setShowHelpModal(true)}
+                                                className="ml-1 p-1 hover:bg-white/10 rounded-full transition-colors text-primary"
+                                                title="Dicas para Automação"
+                                            >
+                                                <HelpCircle size={14} />
+                                            </button>
                                         </p>
                                                 <div>
                                                     <label className={`flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed cursor-pointer transition-all ${comprovante ? 'border-primary/40 bg-primary/5' : 'border-white/10 bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04]'}`}>
@@ -983,6 +993,82 @@ const Transactions: React.FC = () => {
                                 Agora não
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* HELP MODAL */}
+            {showHelpModal && (
+                <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 font-manrope animate-in fade-in duration-300">
+                    <div className="w-full max-w-lg bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-[40px] p-8 md:p-10 shadow-3xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                        
+                        <div className="flex items-center justify-between mb-8 relative z-10">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary border border-primary/20">
+                                    <Sparkles size={24} />
+                                </div>
+                                <h2 className="text-2xl font-black">Dicas para Automação</h2>
+                            </div>
+                            <button 
+                                onClick={() => setShowHelpModal(false)}
+                                className="p-2 hover:bg-white/5 rounded-xl transition-all text-white/40 hover:text-white"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6 relative z-10">
+                            <p className="text-white/40 text-sm font-bold uppercase tracking-widest border-b border-white/5 pb-2">Guia: Como tirar a Foto Perfeita</p>
+                            
+                            <div className="space-y-5">
+                                <div className="flex gap-4 group">
+                                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black group-hover:bg-primary group-hover:border-primary transition-all shrink-0">1</div>
+                                    <div>
+                                        <h4 className="text-sm font-black text-white/80 group-hover:text-white transition-colors">Iluminação é Tudo</h4>
+                                        <p className="text-xs text-white/40 font-medium leading-relaxed">Tire a foto em um local bem iluminado. Sombras sobre o valor ou a data podem confundir a leitura de centavos.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 group">
+                                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black group-hover:bg-primary group-hover:border-primary transition-all shrink-0">2</div>
+                                    <div>
+                                        <h4 className="text-sm font-black text-white/80 group-hover:text-white transition-colors">Enquadramento Reto</h4>
+                                        <p className="text-xs text-white/40 font-medium leading-relaxed">Mantenha o celular paralelo ao papel ou à tela. Fotos inclinadas dificultam a extração do texto em colunas.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 group">
+                                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black group-hover:bg-primary group-hover:border-primary transition-all shrink-0">3</div>
+                                    <div>
+                                        <h4 className="text-sm font-black text-white/80 group-hover:text-white transition-colors">Foco no Cabeçalho e Totais</h4>
+                                        <p className="text-xs text-white/40 font-medium leading-relaxed">Certifique-se de que o título (ex: "Comprovante de Pagamento") e o Valor Total estejam nítidos.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 group">
+                                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black group-hover:bg-primary group-hover:border-primary transition-all shrink-0">4</div>
+                                    <div>
+                                        <h4 className="text-sm font-black text-white/80 group-hover:text-white transition-colors">Evite Amassados</h4>
+                                        <p className="text-xs text-white/40 font-medium leading-relaxed">Se o recibo for de papel térmico, tente esticá-lo. Dobras em cima da data são a maior causa de erros.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 group">
+                                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black group-hover:bg-primary group-hover:border-primary transition-all shrink-0">5</div>
+                                    <div>
+                                        <h4 className="text-sm font-black text-white/80 group-hover:text-white transition-colors text-primary flex items-center gap-2"><Zap size={14} fill="currentColor" /> Print Screen</h4>
+                                        <p className="text-xs text-white/40 font-medium leading-relaxed">Para comprovantes de apps (como Nubank), o Print Screen é sempre a melhor opção: qualidade 100% legível.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setShowHelpModal(false)}
+                            className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-5 rounded-2xl transition-all mt-10 uppercase tracking-widest text-xs"
+                        >
+                            Entendi, vamos lá
+                        </button>
                     </div>
                 </div>
             )}
