@@ -460,6 +460,11 @@ const LandingPage: React.FC = () => {
                         <span className="text-lg font-bold tracking-tight">Gestão<span className="text-red-500">MEI</span> Elite</span>
                     </div>
                     <div className="flex flex-col gap-2 md:text-right">
+                        <div className="flex items-center gap-4 md:justify-end mb-2">
+                            <a href="/termos" className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">Termos</a>
+                            <span className="w-1 h-1 bg-white/10 rounded-full" />
+                            <a href="/privacidade" className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">Privacidade</a>
+                        </div>
                         <p className="text-white/40 text-sm font-medium">
                             © {new Date().getFullYear()} Gestão MEI. Todos os direitos reservados.
                         </p>

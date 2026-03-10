@@ -240,6 +240,45 @@ const Settings: React.FC = () => {
                             </div>
                         </div>
 
+                        {/* Legal Section */}
+                        <div className="bg-white/[0.03] border border-white/5 p-10 rounded-[40px] space-y-8">
+                            <h2 className="text-xl font-black">Documentação Legal</h2>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <a 
+                                    href="/termos" 
+                                    className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/5 transition-all group"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-white/40 group-hover:text-primary transition-colors">
+                                            <Shield size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold">Termos de Uso</p>
+                                            <p className="text-[10px] text-white/40 font-medium">Isenções e responsabilidades</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={16} className="text-white/20 group-hover:translate-x-1 transition-all" />
+                                </a>
+
+                                <a 
+                                    href="/privacidade" 
+                                    className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/5 transition-all group"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-white/40 group-hover:text-primary transition-colors">
+                                            <Lock size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold">Privacidade</p>
+                                            <p className="text-[10px] text-white/40 font-medium">Dados e diretrizes LGPD</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={16} className="text-white/20 group-hover:translate-x-1 transition-all" />
+                                </a>
+                            </div>
+                        </div>
+
                         {/* Danger Zone */}
                         <div className="flex items-center justify-between">
                             <button

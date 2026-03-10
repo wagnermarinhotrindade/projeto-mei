@@ -9,6 +9,7 @@ const Login: React.FC = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [acceptedTerms, setAcceptedTerms] = useState(false);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
@@ -54,6 +55,12 @@ const Login: React.FC = () => {
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!isLogin && !acceptedTerms) {
+            setError('Você precisa aceitar os Termos e a Política de Privacidade.');
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -169,6 +176,25 @@ const Login: React.FC = () => {
                             required
                         />
                     </div>
+
+                    {!isLogin && (
+                        <div className="flex items-start gap-3">
+                            <input
+                                type="checkbox"
+                                id="terms"
+                                checked={acceptedTerms}
+                                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                                className="mt-1 w-4 h-4 rounded border-white/10 bg-white/5 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
+                                required
+                            />
+                            <label htmlFor="terms" className="text-xs text-white/60 leading-tight cursor-pointer">
+                                Li e aceito os{' '}
+                                <a href="/termos" target="_blank" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>Termos de Uso</a>{' '}
+                                e a{' '}
+                                <a href="/privacidade" target="_blank" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>Política de Privacidade</a>.
+                            </label>
+                        </div>
+                    )}
 
                     <button
                         type="submit"
