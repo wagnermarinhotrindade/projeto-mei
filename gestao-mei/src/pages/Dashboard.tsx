@@ -39,7 +39,7 @@ const Dashboard: React.FC = () => {
             .eq('id', currentUser.id)
             .single();
 
-        setIsPro(profile?.plano === 'pro');
+        setIsPro(profile?.plano === 'pro' || profile?.plano === 'elite' || profile?.plano === 'elite_pro');
 
         const { data, error } = await supabase
             .from('transacoes')

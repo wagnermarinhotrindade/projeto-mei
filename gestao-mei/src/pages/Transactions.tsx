@@ -116,7 +116,7 @@ const Transactions: React.FC = () => {
             .eq('id', user.id)
             .single();
 
-        setIsPro(profile?.plano === 'pro');
+        setIsPro(profile?.plano === 'pro' || profile?.plano === 'elite' || profile?.plano === 'elite_pro');
 
         const { data, error } = await supabase
             .from('transacoes')
@@ -850,8 +850,7 @@ const Transactions: React.FC = () => {
                                 </div>
 
                                 {/* Upload de Comprovante */}
-                                {isPro && (
-                                    <div>
+                                <div>
                                         <p className="text-[10px] font-black text-white/20 uppercase tracking-[3px] mb-3 flex items-center gap-2">
                                             <Upload size={12} /> COMPROVANTE (OPCIONAL)
                                             <button 
@@ -912,8 +911,8 @@ const Transactions: React.FC = () => {
                                                         </div>
                                                     )}
                                                 </div>
-                                    </div>
-                                )}
+                                </div>
+
 
                                 {/* Toggle de Recorrência */}
                                 <div>
