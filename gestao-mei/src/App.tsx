@@ -47,14 +47,18 @@ function App() {
 
         const checkIntent = async (user: any) => {
             // REGRA ESTRITA: Captura a intenção no Provider ANTES de liberar rotas
-            const pendingPrice = localStorage.getItem('checkout_price_id');
+            const pendingPrice = localStorage.getItem('pending_purchase_price_id');
+            
             if (pendingPrice && pendingPrice.startsWith('price_') && user) {
                 console.log('Porteiro: Intenção detectada, redirecionando para Stripe...');
-                localStorage.removeItem('checkout_price_id');
+                // Nota: NÃO removemos aqui, o startStripeCheckout cuida da limpeza ou mantemos para retry
                 setIsRedirecting(true);
 
                 try {
-                    await startStripeCheckout(pendingPrice, user.id, user.email || '');
+                    const success = await startStripeCheckout(pendingPrice, user.id, user.email || '');
+                    if (!success) {
+                        setIsRedirecting(false);
+                    }
                     return true;
                 } catch (err) {
                     console.error('Erro no Porteiro (Stripe):', err);

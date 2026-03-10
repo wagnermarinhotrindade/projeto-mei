@@ -15,6 +15,7 @@ import {
     Shield
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { startStripeCheckout } from '../lib/stripe';
 
 const Floating3D = ({ children }: { children: React.ReactNode }) => {
     const [rotate, setRotate] = useState({ x: 0, y: 0 });
@@ -88,11 +89,21 @@ const LandingPage: React.FC = () => {
         }
     };
 
-    const handleProCTA = () => {
+    const handleProCTA = async () => {
+        // Price ID do Plano Pro (Mensal ou Anual)
+        const priceId = isAnnual ? 'price_1T2d6SLjW93jPn5ye6wN7Ptg' : 'price_1T2d6SLjW93jPn5ye6wN7Pth'; // Exemplo de IDs
+
         if (isLoggedIn) {
-            navigate('/dashboard');
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                // Salva intenção e vai direto para Stripe
+                localStorage.setItem('pending_purchase_price_id', priceId);
+                await startStripeCheckout(priceId, user.id, user.email || '');
+            } else {
+                navigate('/auth');
+            }
         } else {
-            navigate(`/auth?plan=${isAnnual ? 'annual' : 'monthly'}`);
+            navigate(`/auth?priceId=${priceId}`);
         }
     };
 

@@ -38,7 +38,7 @@ const Reports: React.FC = () => {
         // Fetch Plan Status
         const { data: profile } = await supabase
             .from('users_profile')
-            .select('nome_empresa, nome_completo, plano, cnpj, cpf')
+            .select('nome_empresa, nome_completo, plano, cnpj, cpf, plan_status')
             .eq('id', user.id)
             .single();
 
@@ -49,7 +49,11 @@ const Reports: React.FC = () => {
                 cnpj: profile.cnpj || '',
                 cpf: profile.cpf || ''
             });
-            setUserPlan(profile.plano || 'gratis');
+            
+            // SEGURANÇA: Verificação robusta de Pro baseada em plano e status
+            const isActive = profile.plan_status === 'active' || profile.plan_status === 'pro';
+            const isProPlan = ['pro', 'elite', 'elite_pro'].includes(profile.plano || '');
+            setUserPlan(isActive && isProPlan ? profile.plano : 'gratis');
         }
 
         const { data, error } = await supabase
@@ -92,7 +96,7 @@ const Reports: React.FC = () => {
         }
     };
 
-    const isPro = userPlan === 'pro';
+    const isPro = ['pro', 'elite', 'elite_pro'].includes(userPlan);
     const filteredTransactions = transactions.filter(t => new Date(t.data).getFullYear() === selectedYear);
     const totalYTD = filteredTransactions.filter(t => t.tipo.includes('Receita')).reduce((acc, t) => acc + t.valor, 0);
     const totalExpenses = filteredTransactions.filter(t => t.tipo.includes('Despesa')).reduce((acc, t) => acc + t.valor, 0);

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Wallet, Loader2, ArrowUpRight, BarChart2, HelpCircle, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Loader2, ArrowUpRight, BarChart2, HelpCircle, Zap, Lock } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
@@ -29,17 +29,22 @@ const Dashboard: React.FC = () => {
         setUser(currentUser);
 
         if (sessionId) {
+            localStorage.removeItem('pending_purchase_price_id');
             navigate('/dashboard', { replace: true });
             alert('Assinatura confirmada! Seu Plano Pro já está ativo. Aproveite os recursos ilimitados.');
         }
 
         const { data: profile } = await supabase
             .from('users_profile')
-            .select('plano')
+            .select('plano, plan_status')
             .eq('id', currentUser.id)
             .single();
 
-        setIsPro(profile?.plano === 'pro' || profile?.plano === 'elite' || profile?.plano === 'elite_pro');
+        // SEGURANÇA: Verificação robusta de Pro baseada em plano e status
+        const isActive = profile?.plan_status === 'active' || profile?.plan_status === 'pro';
+        const isProPlan = ['pro', 'elite', 'elite_pro'].includes(profile?.plano || '');
+        
+        setIsPro(isActive && isProPlan);
 
         const { data, error } = await supabase
             .from('transacoes')
@@ -135,6 +140,8 @@ const Dashboard: React.FC = () => {
     const handleUpgrade = async () => {
         if (!user) return;
         try {
+            // Salva intenção para evitar que o porteiro bloqueie o redirecionamento
+            localStorage.setItem('pending_purchase_price_id', 'price_1T2d6SLjW93jPn5ye6wN7Ptg');
             await startStripeCheckout('price_1T2d6SLjW93jPn5ye6wN7Ptg', user.id, user.email || '');
         } catch (error) {
             console.error('Erro no checkout Stripe:', error);
@@ -240,17 +247,58 @@ const Dashboard: React.FC = () => {
                             </span>
                         </div>
                     </div>
-                    <div className="h-[300px] w-full">
+                    <div className="h-[300px] w-full relative group">
+                        {!isPro && (
+                            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+                                <div className="absolute inset-0 bg-[#0D0D0D]/40 backdrop-blur-[6px] rounded-2xl" />
+                                <div className="relative z-30">
+                                    <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary mx-auto mb-4 border border-primary/20">
+                                        <Lock size={20} />
+                                    </div>
+                                    <h4 className="text-white font-black mb-1">Radar Preditivo (Pro)</h4>
+                                    <p className="text-white/60 text-[10px] font-bold mb-4 max-w-[200px] mx-auto uppercase tracking-wider">Preveja exatamente o mês que você vai desenquadrar.</p>
+                                    <button 
+                                        onClick={handleUpgrade}
+                                        className="bg-primary hover:bg-primary/90 text-white px-6 py-2 rounded-xl text-[10px] font-black transition-all shadow-lg"
+                                    >
+                                        DESBLOQUEAR AGORA
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                         <PredictiveChart data={chartData} />
                     </div>
                 </div>
 
                 {/* Card de Saúde Fiscal */}
-                <FiscalHealthCard
-                    faturamentoAtual={income}
-                    projecaoAnual={projecaoAnual}
-                    mesesAtivos={mesesAtivos}
-                />
+                {/* Card de Saúde Fiscal com Bloqueio Pro */}
+                <div className="relative">
+                    {!isPro && (
+                        <div className="absolute inset-x-4 inset-y-8 z-20 flex flex-col items-center justify-center p-6 text-center">
+                             <div className="absolute inset-0 bg-[#0D0D0D]/40 backdrop-blur-[6px] rounded-[32px]" />
+                             <div className="relative z-30">
+                                 <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary mx-auto mb-4 border border-primary/20">
+                                     <Zap size={18} fill="currentColor" />
+                                 </div>
+                                 <h4 className="text-white font-black mb-1 text-sm">Simulador IRPF</h4>
+                                 <p className="text-white/50 text-[10px] font-bold mb-4 uppercase tracking-widest leading-relaxed">
+                                     Saiba quanto do seu lucro é isento<br/>e proteja seu patrimônio.
+                                 </p>
+                                 <button 
+                                     onClick={handleUpgrade}
+                                     className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl text-[10px] font-black transition-all shadow-lg shadow-primary/20"
+                                 >
+                                     LIBERAR ACESSO
+                                 </button>
+                             </div>
+                        </div>
+                    )}
+                    <FiscalHealthCard
+                        faturamentoAtual={income}
+                        projecaoAnual={projecaoAnual}
+                        mesesAtivos={mesesAtivos}
+                    />
+                </div>
             </div>
 
             {/* Terceira linha: Widget DAS + Mini-stats */}

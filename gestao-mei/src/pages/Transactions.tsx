@@ -112,11 +112,16 @@ const Transactions: React.FC = () => {
 
         const { data: profile } = await supabase
             .from('users_profile')
-            .select('plano')
+            .select('plano, plan_status')
             .eq('id', user.id)
             .single();
 
-        setIsPro(profile?.plano === 'pro' || profile?.plano === 'elite' || profile?.plano === 'elite_pro');
+        if (profile) {
+            // SEGURANÇA: Verificação robusta de Pro baseada em plano e status
+            const isActive = profile.plan_status === 'active' || profile.plan_status === 'pro';
+            const isProPlan = ['pro', 'elite', 'elite_pro'].includes(profile.plano || '');
+            setIsPro(isActive && isProPlan);
+        }
 
         const { data, error } = await supabase
             .from('transacoes')

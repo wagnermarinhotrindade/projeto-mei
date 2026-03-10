@@ -31,7 +31,7 @@ const Login: React.FC = () => {
             // Use the component-level urlPriceId instead of re-fetching or shadowing
             if (urlPriceId && urlPriceId.startsWith('price_')) {
                 console.log('Salvando intenção de compra no localStorage:', urlPriceId);
-                localStorage.setItem('checkout_price_id', urlPriceId);
+                localStorage.setItem('pending_purchase_price_id', urlPriceId);
             }
 
             // PASSO 2: Construir URL de retorno dinâmica
