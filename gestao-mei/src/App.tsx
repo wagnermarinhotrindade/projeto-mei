@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import Feedback from './pages/Feedback';
 import AppLayout from './components/layout/AppLayout';
 import LandingPage from './pages/LandingPage';
 import AuthCallback from './pages/AuthCallback';
@@ -124,6 +125,7 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/transactions" element={<Transactions />} />
                     <Route path="/reports" element={<Reports />} />
+                    <Route path="/feedback" element={<Feedback />} />
                     <Route path="/clients" element={<Placeholder title="Clientes" />} />
                     <Route path="/settings" element={<Settings />} />
                 </Route>

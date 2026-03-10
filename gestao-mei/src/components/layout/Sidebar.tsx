@@ -9,7 +9,8 @@ import {
     LogOut,
     Gem,
     User,
-    X
+    X,
+    MessageSquare
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -24,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
         { icon: ShoppingCart, label: 'Lançamentos', path: '/transactions' },
         { icon: FileBarChart, label: 'Relatórios', path: '/reports' },
+        { icon: MessageSquare, label: 'Feedback', path: '/feedback' },
         { icon: Settings, label: 'Configurações', path: '/settings' },
     ];
 
