@@ -84,6 +84,8 @@ const Transactions: React.FC = () => {
         if (!user) return;
         setCheckoutLoading(true);
         try {
+            // Salva intenção para o Porteiro do Stripe no App.tsx
+            localStorage.setItem('pending_purchase_price_id', 'price_1T2d6SLjW93jPn5ye6wN7Ptg');
             const success = await startStripeCheckout('price_1T2d6SLjW93jPn5ye6wN7Ptg', user.id, user.email || '');
             if (!success) setCheckoutLoading(false);
         } catch (error) {
@@ -870,14 +872,26 @@ const Transactions: React.FC = () => {
                                                 <HelpCircle size={14} />
                                             </button>
                                         </p>
-                                                <div>
-                                                    <label className={`flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed cursor-pointer transition-all ${comprovante ? 'border-primary/40 bg-primary/5' : 'border-white/10 bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04]'}`}>
+                                                <div className="relative">
+                                                    <label 
+                                                        onClick={() => !isPro && handleUpgrade()}
+                                                        className={`flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed transition-all relative overflow-hidden ${!isPro ? 'border-white/5 bg-white/[0.01] cursor-not-allowed grayscale' : comprovante ? 'border-primary/40 bg-primary/5 cursor-pointer' : 'border-white/10 bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04] cursor-pointer'}`}
+                                                    >
                                                         <input
                                                             type="file"
                                                             onChange={handleFileChange}
                                                             accept="image/*,.pdf"
                                                             className="hidden"
+                                                            disabled={!isPro}
                                                         />
+                                                        {!isPro && (
+                                                            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 p-4">
+                                                                <Lock size={20} className="text-primary mb-2" />
+                                                                <span className="text-[10px] font-black text-white px-4 py-2 uppercase tracking-widest text-center leading-relaxed bg-primary/20 rounded-xl border border-primary/30">
+                                                                    Upload de comprovantes exclusivo para o Plano Pro
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                         {uploadPreview ? (
                                                             <div className="relative group">
                                                                 <img src={uploadPreview} alt="Preview" className="h-24 w-auto rounded-2xl object-cover border border-white/10" />
@@ -887,12 +901,14 @@ const Transactions: React.FC = () => {
                                                                 <p className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-green-400 font-black uppercase tracking-widest whitespace-nowrap">Upload Pronto</p>
                                                             </div>
                                                         ) : (
-                                                            <>
-                                                                <Upload size={20} className="text-white/30" />
-                                                                <span className="text-white/40 text-sm font-bold">
-                                                                    {comprovante ? comprovante.name : 'Arraste ou clique para enviar (JPG, PNG ou PDF)'}
-                                                                </span>
-                                                            </>
+                                                            <div className={!isPro ? 'opacity-20' : ''}>
+                                                                <div className="flex items-center justify-center gap-3">
+                                                                    <Upload size={20} className="text-white/30" />
+                                                                    <span className="text-white/40 text-sm font-bold">
+                                                                        {comprovante ? comprovante.name : 'Arraste ou clique para enviar (JPG, PNG ou PDF)'}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                                         )}
                                                     </label>
 
