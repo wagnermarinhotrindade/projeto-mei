@@ -275,16 +275,27 @@ const Transactions: React.FC = () => {
                 if (lowerDesc.includes('internet') || lowerDesc.includes('vivo') || lowerDesc.includes('claro') || lowerDesc.includes('oi')) {
                     updates.categoria = 'Internet';
                     updates.tipo = 'Despesa (Saiu Dinheiro)';
-                } else if (lowerDesc.includes('posto') || lowerDesc.includes('shell') || lowerDesc.includes('ipiranga') || lowerDesc.includes('combustivel')) {
+                } else if (lowerDesc.includes('posto') || lowerDesc.includes('shell') || lowerDesc.includes('ipiranga') || lowerDesc.includes('combustivel') || lowerDesc.includes('gasolina')) {
                     updates.categoria = 'Combustível';
                     updates.tipo = 'Despesa (Saiu Dinheiro)';
                 } else if (lowerDesc.includes('mercado') || lowerDesc.includes('extra') || lowerDesc.includes('pao de acucar') || lowerDesc.includes('carrefour') || lowerDesc.includes('supermercado')) {
                     updates.categoria = 'Alimentação';
                     updates.tipo = 'Despesa (Saiu Dinheiro)';
+                } else if (lowerDesc.includes('aluguel') || lowerDesc.includes('locacao') || lowerDesc.includes('imobiliaria')) {
+                    updates.categoria = 'Aluguel';
+                    updates.tipo = 'Despesa (Saiu Dinheiro)';
                 } else if (lowerDesc.includes('venda') || lowerDesc.includes('cliente') || lowerDesc.includes('pagamento recebido')) {
-                    updates.categoria = 'Venda de Produto';
-                    updates.tipo = 'Receita (Entrou Dinheiro)';
+                    // Regra de Ouro: Só sugere Venda se o tipo não tiver sido forçado para Despesa pelo Banco/Comprovante
+                    if (updates.tipo !== 'Despesa (Saiu Dinheiro)') {
+                        updates.categoria = 'Venda de Produto';
+                        updates.tipo = 'Receita (Entrou Dinheiro)';
+                    }
                 }
+            }
+
+            // Fallback: Se for despesa e não tiver categoria definida, usa 'Outros'
+            if (updates.tipo === 'Despesa (Saiu Dinheiro)' && !updates.categoria) {
+                updates.categoria = 'Outros';
             }
 
             if (Object.keys(updates).length > 0) {
