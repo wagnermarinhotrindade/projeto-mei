@@ -6,7 +6,7 @@ import { startStripeCheckout } from '../lib/stripe';
 import FiscalHealthCard from '../components/dashboard/FiscalHealthCard';
 import DASCountdown from '../components/dashboard/DASCountdown';
 import PredictiveChart from '../components/dashboard/PredictiveChart';
-import FeedbackHub from '../components/dashboard/FeedbackHub';
+
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -227,10 +227,7 @@ const Dashboard: React.FC = () => {
                 </div>
             </div>
 
-            {/* Hub de Feedback */}
-            <div className="pt-4 pb-12">
-                <FeedbackHub />
-            </div>
+
         </div>
     );
 };
