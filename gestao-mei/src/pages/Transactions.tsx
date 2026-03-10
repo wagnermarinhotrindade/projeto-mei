@@ -213,31 +213,59 @@ const Transactions: React.FC = () => {
             await worker.terminate();
 
             console.log('Texto extraído:', text);
+            const updates: Partial<FormData> = {};
+            const upperText = text.toUpperCase();
+
+            // Inteligência de Fluxo: Identificar se é um comprovante de pagamento ou de bancos conhecidos
+            const bancos = ['NUBANK', 'ITAU', 'BRADESCO', 'SANTANDER', 'INTER', 'C6', 'BANCO DO BRASIL', 'CAIXA ECONÔMICA'];
+            const isBanco = bancos.some(b => upperText.includes(b));
+
+            if (upperText.includes('COMPROVANTE DE PAGAMENTO') || isBanco) {
+                updates.tipo = 'Despesa (Saiu Dinheiro)';
+            }
 
             // 1. Extrair Valor
-            // Padrões: R$ 123,45 | 123,45 | R$123.45
-            const valorMatch = text.match(/(?:R\$|VALOR|TOTAL|PAGO)\s*[:]?\s*(\d+(?:\.\d{3})*,\d{2})/i) || 
+            // Padrões: R$ 123,45 | 123,45 | R$123.45 | Total: 123,45
+            const valorMatch = text.match(/(?:R\$|VALOR|TOTAL|PAGO|PAGAR)\s*[:]?\s*(\d+(?:\.\d{3})*,\d{2})/i) || 
                                text.match(/(\d+(?:\.\d{3})*,\d{2})/);
+            if (valorMatch) updates.valor = valorMatch[1];
             
             // 2. Extrair Data
-            // Padrões: 10/10/2023 | 10/10/23
-            const dataMatch = text.match(/(\d{2}\/\d{2}\/\d{2,4})/);
+            // Suporte a: 10/10/2023 | 10-10-2023 | 08 MAR 2026 | 08 DE MARÇO DE 2026
+            const meses: Record<string, string> = {
+                'jan': '01', 'fev': '02', 'mar': '03', 'abr': '04', 'mai': '05', 'jun': '06',
+                'jul': '07', 'ago': '08', 'set': '09', 'out': '10', 'nov': '11', 'dez': '12',
+                'janeiro': '01', 'fevereiro': '02', 'março': '03', 'marco': '03', 'abril': '04', 'maio': '05', 'junho': '06',
+                'julho': '07', 'agosto': '08', 'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
+            };
+
+            // Padrão numérico: DD/MM/YYYY ou DD/MM/YY
+            const dataNumMatch = text.match(/(\d{2})[/-](\d{2})[/-](\d{2,4})/);
+            
+            // Padrão textual: DD MMM YYYY ou DD de MMM de YYYY
+            const dataTextMatch = text.match(/(\d{2})\s*(?:de\s*)?([a-zA-ZçÇ]{3,})\s*(?:de\s*)?(\d{4})/i);
+
+            if (dataNumMatch) {
+                const day = dataNumMatch[1];
+                const month = dataNumMatch[2];
+                const year = dataNumMatch[3].length === 2 ? `20${dataNumMatch[3]}` : dataNumMatch[3];
+                updates.data = `${year}-${month}-${day}`;
+            } else if (dataTextMatch) {
+                const day = dataTextMatch[1];
+                const monthName = dataTextMatch[2].toLowerCase().substring(0, 3);
+                const month = meses[monthName] || meses[dataTextMatch[2].toLowerCase()];
+                const year = dataTextMatch[3];
+                if (month) {
+                    updates.data = `${year}-${month}-${day}`;
+                }
+            }
 
             // 3. Extrair Descrição (Geralmente a primeira linha ou nome fantasia)
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
-            let descricao = lines[0]; // Assume que a primeira linha relevante é o nome
+            let descricao = lines[0];
             
-            // Evitar pegar o cabeçalho "CUPOM FISCAL" se possível
-            if (descricao.toUpperCase().includes('CUPOM') || descricao.toUpperCase().includes('COMPROVANTE')) {
+            if (descricao && (descricao.toUpperCase().includes('CUPOM') || descricao.toUpperCase().includes('COMPROVANTE') || descricao.toUpperCase().includes('EXTRATO'))) {
                 descricao = lines[1] || descricao;
-            }
-
-            const updates: Partial<FormData> = {};
-            if (valorMatch) updates.valor = valorMatch[1];
-            if (dataMatch) {
-                const parts = dataMatch[1].split('/');
-                const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
-                updates.data = `${year}-${parts[1]}-${parts[0]}`;
             }
             if (descricao) updates.descricao = descricao;
 
@@ -250,19 +278,19 @@ const Transactions: React.FC = () => {
                 } else if (lowerDesc.includes('posto') || lowerDesc.includes('shell') || lowerDesc.includes('ipiranga') || lowerDesc.includes('combustivel')) {
                     updates.categoria = 'Combustível';
                     updates.tipo = 'Despesa (Saiu Dinheiro)';
-                } else if (lowerDesc.includes('mercado') || lowerDesc.includes('extra') || lowerDesc.includes('pao de acucar') || lowerDesc.includes('carrefour')) {
+                } else if (lowerDesc.includes('mercado') || lowerDesc.includes('extra') || lowerDesc.includes('pao de acucar') || lowerDesc.includes('carrefour') || lowerDesc.includes('supermercado')) {
                     updates.categoria = 'Alimentação';
                     updates.tipo = 'Despesa (Saiu Dinheiro)';
-                } else if (lowerDesc.includes('venda') || lowerDesc.includes('cliente')) {
+                } else if (lowerDesc.includes('venda') || lowerDesc.includes('cliente') || lowerDesc.includes('pagamento recebido')) {
                     updates.categoria = 'Venda de Produto';
                     updates.tipo = 'Receita (Entrou Dinheiro)';
                 }
             }
 
             if (Object.keys(updates).length > 0) {
+                // Se a data foi extraída, ela será aplicada, sobrepondo a data atual/padrão
                 setFormData(prev => ({ ...prev, ...updates }));
-                setOcrFeedback('Dados extraídos automaticamente do comprovante. Por favor, revise antes de salvar.');
-                // Limpar feedback após 8 segundos
+                setOcrFeedback('Dados extraídos do comprovante. Por favor, revise os campos destacados.');
                 setTimeout(() => setOcrFeedback(null), 8000);
             }
 
@@ -351,7 +379,8 @@ const Transactions: React.FC = () => {
         if (isNaN(val)) { alert('Valor inválido'); setIsSubmitting(false); return; }
 
         // Upload do comprovante (somente Pro)
-        let comprovante_url: string | null = null;
+        let comprovante_url = editingId ? (data.find(d => d.id === editingId)?.comprovante_url || null) : null;
+        
         if (userIsPro && comprovante) {
             comprovante_url = await uploadComprovante(user.id);
         }
@@ -391,6 +420,44 @@ const Transactions: React.FC = () => {
     };
 
     const [viewingImageUrl, setViewingImageUrl] = useState<string | null>(null);
+    const [isGeneratingSignedUrl, setIsGeneratingSignedUrl] = useState(false);
+
+    const handleViewComprovante = async (url: string) => {
+        if (!url) return;
+        
+        // Se já for uma URL data: (preview local), usa direto
+        if (url.startsWith('data:')) {
+            setViewingImageUrl(url);
+            return;
+        }
+
+        setIsGeneratingSignedUrl(true);
+        try {
+            // Extrair o path da URL do Supabase
+            // Formato esperado: .../storage/v1/object/public/comprovantes/PATH
+            const parts = url.split('/comprovantes/');
+            if (parts.length > 1) {
+                const path = parts[1];
+                const { data, error } = await supabase.storage
+                    .from('comprovantes')
+                    .createSignedUrl(path, 3600); // 1 hora de validade
+                
+                if (error) throw error;
+                if (data?.signedUrl) {
+                    setViewingImageUrl(data.signedUrl);
+                }
+            } else {
+                // Se não conseguir parsear, tenta usar a URL original (fallback)
+                setViewingImageUrl(url);
+            }
+        } catch (error) {
+            console.error('Erro ao gerar URL assinada:', error);
+            // Fallback para a URL original em caso de erro
+            setViewingImageUrl(url);
+        } finally {
+            setIsGeneratingSignedUrl(false);
+        }
+    };
 
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza que deseja excluir?')) return;
@@ -501,11 +568,16 @@ const Transactions: React.FC = () => {
                                                 {item.descricao}
                                                 {item.comprovante_url && (
                                                     <button 
-                                                        onClick={() => setViewingImageUrl(item.comprovante_url)}
-                                                        className="p-1 hover:bg-white/10 rounded-md transition-all text-primary"
-                                                        aria-label="Ver comprovante"
+                                                        onClick={() => handleViewComprovante(item.comprovante_url)}
+                                                        className="p-1.5 bg-primary/10 hover:bg-primary/20 rounded-lg transition-all text-primary flex items-center justify-center group/icon disabled:opacity-50"
+                                                        title="Ver comprovante"
+                                                        disabled={isGeneratingSignedUrl}
                                                     >
-                                                        {item.comprovante_url.toLowerCase().endsWith('.pdf') ? <Paperclip size={14} /> : <Search size={14} />}
+                                                        {isGeneratingSignedUrl ? (
+                                                            <Loader2 size={14} className="animate-spin" />
+                                                        ) : (
+                                                            <Search size={14} className="group-hover/icon:scale-110 transition-transform" />
+                                                        )}
                                                     </button>
                                                 )}
                                                 {item.is_recorrente && (
@@ -521,7 +593,7 @@ const Transactions: React.FC = () => {
                                             )}
                                         </td>
                                         <td className={`px-8 py-6 text-right text-base font-black tracking-tight ${item.tipo?.includes('Receita') ? 'text-green-400' : 'text-red-500'}`}>
-                                            {item.tipo?.includes('Receita') ? '+' : '-'} R$ {item.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            {item.tipo?.includes('Receita') ? '+' : '-'} {item.valor?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                         </td>
                                         <td className="px-8 py-6 text-center">
                                             <div className="flex items-center justify-center gap-2 relative">

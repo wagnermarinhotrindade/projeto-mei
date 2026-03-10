@@ -115,9 +115,9 @@ const Dashboard: React.FC = () => {
     }, [transactions, currentYear, currentMonth]);
 
     const stats = [
-        { label: 'Faturamento Anual', value: `R$ ${income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingUp, color: 'text-green-400' },
-        { label: 'Despesas Totais', value: `R$ ${expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: TrendingDown, color: 'text-red-400' },
-        { label: 'Lucro Líquido', value: `R$ ${profit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, icon: Wallet, color: profit >= 0 ? 'text-primary' : 'text-red-400' },
+        { label: 'Faturamento Anual', value: income.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), icon: TrendingUp, color: 'text-green-400' },
+        { label: 'Despesas Totais', value: expense.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), icon: TrendingDown, color: 'text-red-400' },
+        { label: 'Lucro Líquido', value: profit.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), icon: Wallet, color: profit >= 0 ? 'text-primary' : 'text-red-400' },
     ];
 
     if (loading) {
@@ -270,7 +270,7 @@ const Dashboard: React.FC = () => {
                         <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                             <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mb-1">Média Mensal</p>
                             <p className="text-xl font-black text-white">
-                                R$ {mesesAtivos > 0 ? (income / mesesAtivos).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : '0'}
+                                {mesesAtivos > 0 ? (income / mesesAtivos).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 'R$ 0'}
                             </p>
                         </div>
                         <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
@@ -286,7 +286,7 @@ const Dashboard: React.FC = () => {
                         <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                             <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mb-1">Limite Restante</p>
                             <p className="text-xl font-black text-green-400">
-                                R$ {Math.max(0, 81000 - income).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                {Math.max(0, 81000 - income).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </p>
                         </div>
                     </div>
