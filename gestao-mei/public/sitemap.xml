@@ -7,6 +7,30 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://meigestao.app.br/blog</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://meigestao.app.br/blog/livro-caixa-mei-ia</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://meigestao.app.br/blog/limite-mei-2026-radar</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://meigestao.app.br/blog/simulador-irpf-mei-isencao</loc>
+    <lastmod>2026-03-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://meigestao.app.br/termos</loc>
     <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
