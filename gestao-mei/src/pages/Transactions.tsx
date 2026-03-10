@@ -72,6 +72,8 @@ const Transactions: React.FC = () => {
     const [user, setUser] = useState<any>(null);
     const [isPro, setIsPro] = useState(false);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
     const handleUpgrade = async () => {
         if (!user) return;
@@ -139,6 +141,24 @@ const Transactions: React.FC = () => {
         });
         setComprovante(null);
         setUploadPreview(null);
+        setEditingId(null);
+    };
+
+    const handleEdit = (item: any) => {
+        setFormData({
+            tipo: item.tipo,
+            valor: String(item.valor).replace('.', ','),
+            categoria: item.categoria,
+            descricao: item.descricao || '',
+            data: item.data,
+            tipo_receita: item.tipo_receita || '',
+            is_recorrente: item.is_recorrente || false,
+            recurrence_day: String(item.recurrence_day || new Date().getDate()),
+        });
+        setEditingId(item.id);
+        setUploadPreview(item.comprovante_url || null);
+        setIsModalOpen(true);
+        setActiveMenuId(null);
     };
 
     // --- IA: Categorizar com palavras-chave ---
@@ -269,10 +289,19 @@ const Transactions: React.FC = () => {
             recurrence_day: formData.is_recorrente ? parseInt(formData.recurrence_day) : null,
         };
 
-        const { error } = await supabase.from('transacoes').insert(payload);
+        let result;
+        if (editingId) {
+            result = await supabase
+                .from('transacoes')
+                .update(payload)
+                .eq('id', editingId)
+                .eq('user_id', user.id); // Proteção: só edita se for o dono
+        } else {
+            result = await supabase.from('transacoes').insert(payload);
+        }
 
-        if (error) {
-            alert(error.message);
+        if (result.error) {
+            alert(result.error.message);
         } else {
             setIsModalOpen(false);
             resetForm();
@@ -285,9 +314,18 @@ const Transactions: React.FC = () => {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Tem certeza que deseja excluir?')) return;
-        const { error } = await supabase.from('transacoes').delete().eq('id', id);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { error } = await supabase
+            .from('transacoes')
+            .delete()
+            .eq('id', id)
+            .eq('user_id', user.id); // Proteção: só deleta se for o dono
+        
         if (error) alert(error.message);
         else fetchData();
+        setActiveMenuId(null);
     };
 
     const filteredData = data.filter(item =>
@@ -390,16 +428,30 @@ const Transactions: React.FC = () => {
                                             {item.tipo?.includes('Receita') ? '+' : '-'} R$ {item.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                         </td>
                                         <td className="px-8 py-6 text-center">
-                                            <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/40 hover:text-white transition-all">
+                                            <div className="flex items-center justify-center gap-2 relative">
+                                                <button 
+                                                    onClick={() => setActiveMenuId(activeMenuId === item.id ? null : item.id)}
+                                                    className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white/40 hover:text-white transition-all"
+                                                >
                                                     <MoreHorizontal size={18} />
                                                 </button>
-                                                <button
-                                                    onClick={() => handleDelete(item.id)}
-                                                    className="p-2.5 bg-primary/10 hover:bg-primary text-primary/60 hover:text-white rounded-xl transition-all"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                
+                                                {activeMenuId === item.id && (
+                                                    <div className="absolute right-full mr-2 z-50 bg-zinc-900 border border-white/10 rounded-2xl p-2 shadow-2xl min-w-[140px] animate-in fade-in slide-in-from-right-2">
+                                                        <button 
+                                                            onClick={() => handleEdit(item)}
+                                                            className="w-full flex items-center gap-2 px-4 py-2 text-xs font-bold text-white/70 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                                                        >
+                                                            <Sparkles size={14} className="text-primary" /> Editar
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleDelete(item.id)}
+                                                            className="w-full flex items-center gap-2 px-4 py-2 text-xs font-bold text-red-500/70 hover:text-red-500 hover:bg-red-500/5 rounded-xl transition-all"
+                                                        >
+                                                            <Trash2 size={14} /> Excluir
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -449,11 +501,13 @@ const Transactions: React.FC = () => {
                     <div className="w-full max-w-4xl relative">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6 md:mb-8 px-4 md:px-0 mt-8 md:mt-0">
-                            <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white">Novo Lançamento</h2>
+                            <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white">
+                                {editingId ? 'Editar Lançamento' : 'Novo Lançamento'}
+                            </h2>
                             <div className="flex items-center gap-4">
-                                <button className="p-4 bg-white/5 rounded-full text-white/40 hover:text-white transition-all border border-white/5">
-                                    <Bell size={24} />
-                                </button>
+                                {editingId && (
+                                    <span className="bg-primary/10 border border-primary/20 text-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">Editando Registro</span>
+                                )}
                                 <button
                                     onClick={() => { setIsModalOpen(false); resetForm(); }}
                                     className="p-4 bg-white/5 rounded-full text-white/40 hover:text-white transition-all border border-white/5"
@@ -514,7 +568,15 @@ const Transactions: React.FC = () => {
                                             <button
                                                 key={cat.id}
                                                 type="button"
-                                                onClick={() => setFormData({ ...formData, categoria: cat.id })}
+                                                onClick={() => {
+                                                    const isExpense = ['Aluguel', 'Internet', 'Compra de Mercadoria', 'Frete', 'Alimentação', 'Combustível', 'Saúde', 'Impostos (DAS)'].includes(cat.id);
+                                                    setFormData({ 
+                                                        ...formData, 
+                                                        categoria: cat.id,
+                                                        tipo: isExpense ? 'Despesa (Saiu Dinheiro)' : formData.tipo,
+                                                        tipo_receita: isExpense ? '' : formData.tipo_receita
+                                                    });
+                                                }}
                                                 className={`p-4 rounded-[24px] border transition-all flex flex-col items-center gap-3 group ${formData.categoria === cat.id
                                                     ? 'bg-primary/10 border-primary/40 text-white'
                                                     : 'bg-white/[0.03] border-white/5 text-white/40 hover:bg-white/5 hover:text-white'
@@ -609,24 +671,36 @@ const Transactions: React.FC = () => {
                                                     onChange={handleFileChange}
                                                 />
                                                 {uploadPreview ? (
-                                                    <img src={uploadPreview} alt="Preview" className="h-20 w-auto rounded-xl object-cover" />
+                                                    <div className="relative group">
+                                                        <img src={uploadPreview} alt="Preview" className="h-24 w-auto rounded-2xl object-cover border border-white/10" />
+                                                        <div className="absolute inset-0 bg-green-500/20 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Check size={24} className="text-white" />
+                                                        </div>
+                                                        <p className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-green-400 font-black uppercase tracking-widest whitespace-nowrap">Upload Pronto</p>
+                                                    </div>
                                                 ) : (
                                                     <>
                                                         <Upload size={20} className="text-white/30" />
                                                         <span className="text-white/40 text-sm font-bold">
-                                                            {comprovante ? comprovante.name : 'Arraste ou clique para enviar JPG, PNG ou PDF (máx. 10MB)'}
+                                                            {comprovante ? comprovante.name : 'Arraste ou clique para enviar (JPG, PNG ou PDF)'}
                                                         </span>
                                                     </>
                                                 )}
                                             </label>
                                             {comprovante && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => { setComprovante(null); setUploadPreview(null); }}
-                                                    className="mt-2 text-[10px] text-red-400/60 hover:text-red-400 font-bold ml-2 transition-colors"
-                                                >
-                                                    Remover arquivo
-                                                </button>
+                                                <div className="flex items-center gap-4 mt-4 ml-2">
+                                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                                        <Check size={12} className="text-green-400" />
+                                                        <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Arquivo Selecionado</span>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => { setComprovante(null); setUploadPreview(null); }}
+                                                        className="text-[10px] text-red-400/60 hover:text-red-400 font-bold transition-colors"
+                                                    >
+                                                        Remover
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
                                     ) : (

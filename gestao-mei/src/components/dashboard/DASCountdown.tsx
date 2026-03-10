@@ -73,7 +73,7 @@ const DASCountdown: React.FC = () => {
             </div>
 
             <div className="relative z-10 p-3 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center">
-                <span className="text-[10px] text-white/40 font-black uppercase tracking-wide">DAS Estimado</span>
+                <span className="text-[10px] text-white/40 font-black uppercase tracking-wide">Reserva Sugerida para DAS</span>
                 <span className="text-sm font-black text-white">R$ 75,90</span>
             </div>
         </div>
