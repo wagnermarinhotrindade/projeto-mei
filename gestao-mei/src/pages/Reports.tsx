@@ -10,7 +10,8 @@ import {
     Loader2,
     AlertCircle,
     FileText,
-    Zap
+    Zap,
+    HelpCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { jsPDF } from 'jspdf';
@@ -23,7 +24,7 @@ const Reports: React.FC = () => {
     const [transactions, setTransactions] = useState<any[]>([]);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [activityType, setActivityType] = useState('Serviços');
-    const [companyInfo, setCompanyInfo] = useState({ nome_empresa: 'Minha Empresa MEI', nome_completo: '' });
+    const [companyInfo, setCompanyInfo] = useState({ nome_empresa: 'Minha Empresa MEI', nome_completo: '', cnpj: '', cpf: '' });
     const [userPlan, setUserPlan] = useState('gratis');
     const [user, setUser] = useState<any>(null);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -36,14 +37,16 @@ const Reports: React.FC = () => {
         // Fetch Plan Status
         const { data: profile } = await supabase
             .from('users_profile')
-            .select('nome_empresa, nome_completo, plano')
+            .select('nome_empresa, nome_completo, plano, cnpj, cpf')
             .eq('id', user.id)
             .single();
 
         if (profile) {
             setCompanyInfo({
                 nome_empresa: profile.nome_empresa || 'Minha Empresa MEI',
-                nome_completo: profile.nome_completo || ''
+                nome_completo: profile.nome_completo || '',
+                cnpj: profile.cnpj || '',
+                cpf: profile.cpf || ''
             });
             setUserPlan(profile.plano || 'gratis');
         }
@@ -134,82 +137,149 @@ const Reports: React.FC = () => {
         }
         const doc = new jsPDF();
         const dateStr = new Date().toLocaleDateString('pt-BR');
-
-        // Styles & Colors
         const primaryColor = [246, 85, 85]; // #f65555
 
-        // Header
+        // --- PÁGINA 1: RESUMO EXECUTIVO ---
         doc.setFontSize(22);
         doc.setTextColor(40);
+        doc.setFont('helvetica', 'bold');
         doc.text('Relatório Anual de Faturamento MEI', 14, 22);
 
         doc.setFontSize(10);
         doc.setTextColor(100);
+        doc.setFont('helvetica', 'normal');
         doc.text(`Ano Base: ${selectedYear}`, 14, 30);
         doc.text(`Gerado em: ${dateStr}`, 14, 35);
 
-        // Company Info
+        // Header Border
         doc.setDrawColor(230);
         doc.line(14, 40, 196, 40);
 
-        doc.setFontSize(12);
+        // Company Details
+        doc.setFontSize(14);
         doc.setTextColor(40);
         doc.setFont('helvetica', 'bold');
-        doc.text(companyInfo.nome_empresa, 14, 50);
+        doc.text(companyInfo.nome_empresa, 14, 52);
 
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(100);
-        doc.text(`Responsável: ${companyInfo.nome_completo || 'Não informado'}`, 14, 56);
+        doc.text(`Titular: ${companyInfo.nome_completo || 'Não informado'}`, 14, 60);
+        doc.text(`CNPJ: ${companyInfo.nome_empresa ? companyInfo.cnpj : '—'}`, 14, 66);
+        doc.text(`CPF: ${companyInfo.nome_completo ? companyInfo.cpf : '—'}`, 14, 72);
 
-        // Summary Box
+        // Total Accumulated Box
         doc.setFillColor(245, 245, 245);
-        doc.roundedRect(14, 65, 182, 30, 3, 3, 'F');
+        doc.roundedRect(14, 80, 182, 35, 3, 3, 'F');
 
         doc.setFontSize(9);
         doc.setTextColor(120);
-        doc.text('FATURAMENTO BRUTO TOTAL DO ANO', 20, 75);
-
-        doc.setFontSize(24);
-        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
         doc.setFont('helvetica', 'bold');
-        doc.text(`R$ ${totalYTD.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 87);
+        doc.text('FATURAMENTO BRUTO TOTAL ACUMULADO (MÉDIA: R$ ' + (totalYTD/12).toLocaleString('pt-BR', {minimumFractionDigits: 2}) + '/mês)', 20, 90);
+
+        doc.setFontSize(26);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text(`R$ ${totalYTD.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, 20, 105);
 
         // Monthly Table
-        const tableBody = monthlySummary
-            .sort((a, b) => a.monthIndex - b.monthIndex) // Order for the official report
-            .map(m => [
-                m.monthName.charAt(0).toUpperCase() + m.monthName.slice(1),
+        const tableBody = Array.from({ length: 12 }, (_, i) => {
+            const m = Array.from({ length: 12 }, (_, idx) => {
+                const monthTransactions = filteredTransactions.filter(t => new Date(t.data).getMonth() === idx);
+                const receitas = monthTransactions.filter(t => t.tipo?.includes('Receita'));
+                const servicos = receitas
+                    .filter(t => t.tipo_receita === 'servico' || (!t.tipo_receita && t.categoria === 'Prestação de Serviço'))
+                    .reduce((acc, t) => acc + t.valor, 0);
+                const comercio = receitas
+                    .filter(t => t.tipo_receita === 'comercio' || (!t.tipo_receita && t.categoria === 'Venda de Produto'))
+                    .reduce((acc, t) => acc + t.valor, 0);
+                return {
+                    name: new Date(selectedYear, idx).toLocaleDateString('pt-BR', { month: 'long' }),
+                    servicos,
+                    comercio,
+                    total: servicos + comercio
+                };
+            })[i];
+
+            return [
+                m.name.charAt(0).toUpperCase() + m.name.slice(1),
                 `R$ ${m.servicos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
                 `R$ ${m.comercio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
-                `R$ ${m.faturamentoBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-            ]);
+                `R$ ${m.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+            ];
+        });
 
         autoTable(doc, {
-            startY: 105,
-            head: [['Mês', 'Serviços', 'Comércio', 'Total Mensal']],
+            startY: 125,
+            head: [['Mês de Referência', 'Receita Serviços', 'Receita Comércio', 'Total Mensal']],
             body: tableBody,
             headStyles: { fillColor: primaryColor as [number, number, number], textColor: 255, fontStyle: 'bold' },
             alternateRowStyles: { fillColor: [250, 250, 250] },
             margin: { left: 14, right: 14 },
-            styles: { fontSize: 9, cellPadding: 5 },
+            styles: { fontSize: 9, cellPadding: 4 },
             columnStyles: {
                 1: { halign: 'right' },
                 2: { halign: 'right' },
-                3: { halign: 'right' }
+                3: { halign: 'right', fontStyle: 'bold' }
+            },
+            foot: [[
+                'TOTAL ACUMULADO', 
+                `R$ ${filteredTransactions.filter(t => t.tipo?.includes('Receita') && (t.tipo_receita === 'servico' || (!t.tipo_receita && t.categoria === 'Prestação de Serviço'))).reduce((acc, t) => acc + t.valor, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                `R$ ${filteredTransactions.filter(t => t.tipo?.includes('Receita') && (t.tipo_receita === 'comercio' || (!t.tipo_receita && t.categoria === 'Venda de Produto'))).reduce((acc, t) => acc + t.valor, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+                `R$ ${totalYTD.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+            ]],
+            footStyles: { fillColor: [60, 60, 60], textColor: 255, fontStyle: 'bold' }
+        });
+
+        // Legal Footer (Page 1)
+        const page1Height = doc.internal.pageSize.height;
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.setFont('helvetica', 'italic');
+        doc.text('Este documento é um controle gerencial interno e não substitui a emissão de notas fiscais obrigatórias.', 14, page1Height - 15);
+        doc.text('MEI Survival Assistant - Proteção Fiscal e Inteligência Preditiva', 14, page1Height - 10);
+
+        // --- PÁGINA 2: AUDITORIA DE LANÇAMENTOS ---
+        doc.addPage();
+        doc.setFontSize(18);
+        doc.setTextColor(40);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Página de Auditoria', 14, 22);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Lista detalhada de todos os lançamentos que compõem o faturamento declarado.', 14, 30);
+
+        const auditBody = filteredTransactions
+            .filter(t => t.tipo?.includes('Receita'))
+            .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+            .map(t => [
+                new Date(t.data).toLocaleDateString('pt-BR'),
+                t.descricao || 'S/ Descrição',
+                t.categoria || 'Geral',
+                t.tipo_receita === 'servico' ? 'Serviço' : 'Comércio',
+                t.comprovante_url ? 'Sim' : 'Não',
+                `R$ ${t.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+            ]);
+
+        autoTable(doc, {
+            startY: 40,
+            head: [['Data', 'Descrição', 'Categoria', 'Tipo', 'Anexo', 'Valor']],
+            body: auditBody,
+            headStyles: { fillColor: [100, 100, 100], textColor: 255 },
+            styles: { fontSize: 8 },
+            columnStyles: {
+                5: { halign: 'right', fontStyle: 'bold' }
             }
         });
 
-        // Footer / Totals
-        const finalY = (doc as any).lastAutoTable.finalY + 10;
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Este relatório serve como base para a Declaração Anual do Simples Nacional (DASN-SIMEI).', 14, finalY);
-        doc.text('Verifique sempre a consistência dos dados com suas notas fiscais e registros.', 14, finalY + 5);
+        // Legal Footer (Page 2)
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text('Este documento é um controle gerencial interno e não substitui a emissão de notas fiscais obrigatórias.', 14, page1Height - 15);
 
         // Save
-        doc.save(`Relatorio-DASN-${selectedYear}.pdf`);
+        doc.save(`Relatorio-DASN-Elite-${selectedYear}.pdf`);
     };
 
     if (loading) {
@@ -329,7 +399,16 @@ const Reports: React.FC = () => {
                                 <span className="px-3 py-1 bg-white/10 text-white/60 text-[8px] font-black uppercase tracking-widest rounded-full border border-white/10">
                                     PROFISSIONAL (FISCAL)
                                 </span>
-                                <h2 className="text-2xl font-black mt-2 leading-none">Simulador IRPF</h2>
+                                <h2 className="text-2xl font-black mt-2 leading-none flex items-center gap-2">
+                                    Simulador IRPF
+                                    <span className="group relative">
+                                        <HelpCircle size={16} className="text-white/20 cursor-help hover:text-primary transition-colors" />
+                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-white text-black text-[10px] font-bold rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-2xl z-50 leading-relaxed">
+                                            <span className="text-primary block mb-1 uppercase font-black tracking-widest text-[8px]">Dicionário MEI</span>
+                                            Parcela isenta do faturamento com base no lucro presumido (ex: 32% para serviços e 8% para comércio).
+                                        </span>
+                                    </span>
+                                </h2>
                             </div>
                             <select
                                 value={activityType}

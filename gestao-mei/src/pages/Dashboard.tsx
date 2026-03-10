@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, Wallet, Loader2, ArrowUpRight, BarChart2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Loader2, ArrowUpRight, BarChart2, HelpCircle } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
 import FiscalHealthCard from '../components/dashboard/FiscalHealthCard';
 import DASCountdown from '../components/dashboard/DASCountdown';
 import PredictiveChart from '../components/dashboard/PredictiveChart';
+import FeedbackHub from '../components/dashboard/FeedbackHub';
 
 const MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -114,7 +115,16 @@ const Dashboard: React.FC = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-white tracking-tight">Painel de Controle</h1>
-                    <p className="text-white/40 font-bold mt-1">Inteligência preditiva para seu MEI. Limite 2026: R$ 81.000,00.</p>
+                    <p className="text-white/40 font-bold mt-1 flex items-center gap-2">
+                        Inteligência preditiva para seu MEI. Limite 2026: R$ 81.000,00.
+                        <span className="group relative">
+                            <HelpCircle size={14} className="text-white/20 cursor-help hover:text-primary transition-colors" />
+                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-white text-black text-[10px] font-bold rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-2xl z-50 leading-relaxed">
+                                <span className="text-primary block mb-1 uppercase font-black tracking-widest text-[8px]">Dicionário MEI</span>
+                                O limite de R$ 81k refere-se ao faturamento BRUTO acumulado no ano, antes de descontar qualquer despesa.
+                            </span>
+                        </span>
+                    </p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl backdrop-blur-sm">
@@ -215,6 +225,11 @@ const Dashboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Hub de Feedback */}
+            <div className="pt-4 pb-12">
+                <FeedbackHub />
             </div>
         </div>
     );

@@ -21,6 +21,8 @@ const Settings: React.FC = () => {
     const [profileImage, setProfileImage] = useState<string | null>(null);
     const [name, setName] = useState("");
     const [companyName, setCompanyName] = useState("");
+    const [cnpj, setCnpj] = useState("");
+    const [cpf, setCpf] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -40,6 +42,8 @@ const Settings: React.FC = () => {
             } else if (data) {
                 setName(data.nome_completo || "");
                 setCompanyName(data.nome_empresa || "");
+                setCnpj(data.cnpj || "");
+                setCpf(data.cpf || "");
             }
             setIsLoading(false);
         };
@@ -78,6 +82,8 @@ const Settings: React.FC = () => {
                 id: user.id,
                 nome_completo: name,
                 nome_empresa: companyName,
+                cnpj: cnpj,
+                cpf: cpf,
             });
 
         if (error) {
@@ -175,6 +181,26 @@ const Settings: React.FC = () => {
                                         type="text"
                                         value={companyName}
                                         onChange={(e) => setCompanyName(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-primary/50 text-white font-medium"
+                                    />
+                                </div>
+                                <div className="col-span-1">
+                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-widest mb-3">CNPJ</label>
+                                    <input
+                                        type="text"
+                                        value={cnpj}
+                                        onChange={(e) => setCnpj(e.target.value)}
+                                        placeholder="00.000.000/0000-00"
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-primary/50 text-white font-medium"
+                                    />
+                                </div>
+                                <div className="col-span-1">
+                                    <label className="block text-[10px] font-black text-white/20 uppercase tracking-widest mb-3">CPF do Titular</label>
+                                    <input
+                                        type="text"
+                                        value={cpf}
+                                        onChange={(e) => setCpf(e.target.value)}
+                                        placeholder="000.000.000-00"
                                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-primary/50 text-white font-medium"
                                     />
                                 </div>

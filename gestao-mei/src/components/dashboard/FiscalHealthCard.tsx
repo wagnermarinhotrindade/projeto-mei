@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, AlertTriangle, XCircle, TrendingUp } from 'lucide-react';
+import { Shield, AlertTriangle, XCircle, TrendingUp, HelpCircle } from 'lucide-react';
 
 interface FiscalHealthCardProps {
     faturamentoAtual: number;
@@ -75,8 +75,17 @@ const FiscalHealthCard: React.FC<FiscalHealthCardProps> = ({ faturamentoAtual, p
 
                 {/* Stats */}
                 <div className="space-y-2.5">
-                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
-                        <span className="text-white/40 font-bold text-xs">Faturado Atual</span>
+                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5 group/tooltip">
+                        <div className="flex items-center gap-2">
+                            <span className="text-white/40 font-bold text-xs uppercase tracking-widest">Faturamento Atual</span>
+                            <span className="relative">
+                                <HelpCircle size={10} className="text-white/20 cursor-help hover:text-primary transition-colors" />
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-white text-black text-[10px] font-bold rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none shadow-2xl z-50 leading-relaxed">
+                                    <span className="text-primary block mb-1 uppercase font-black tracking-widest text-[8px]">Dicionário MEI</span>
+                                    O limite de R$ 81k é baseado em sua Receita Bruta acumulada. Despesas não são deduzidas para este cálculo.
+                                </span>
+                            </span>
+                        </div>
                         <span className="text-white font-black text-sm">
                             R$ {faturamentoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>

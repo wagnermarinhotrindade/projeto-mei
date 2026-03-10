@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { CalendarClock, AlertCircle, CheckCircle } from 'lucide-react';
+import { CalendarClock, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 
 const DASCountdown: React.FC = () => {
     const { daysLeft, nextDAS, isUrgent, isPast } = useMemo(() => {
@@ -72,8 +72,17 @@ const DASCountdown: React.FC = () => {
                 </p>
             </div>
 
-            <div className="relative z-10 p-3 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center">
-                <span className="text-[10px] text-white/40 font-black uppercase tracking-wide">Reserva Sugerida para DAS</span>
+            <div className="relative z-10 p-3 bg-white/5 rounded-2xl border border-white/5 flex justify-between items-center group/tooltip">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-white/40 font-black uppercase tracking-wide">Reserva Sugerida para DAS</span>
+                    <span className="relative">
+                        <HelpCircle size={10} className="text-white/20 cursor-help hover:text-primary transition-colors" />
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-white text-black text-[10px] font-bold rounded-xl opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none shadow-2xl z-50 leading-relaxed">
+                            <span className="text-primary block mb-1 uppercase font-black tracking-widest text-[8px]">Dicionário MEI</span>
+                            R$ 75,90 é a contribuição mensal obrigatória (INSS + ICMS/ISS) que garante seus benefícios previdenciários e alvarás.
+                        </span>
+                    </span>
+                </div>
                 <span className="text-sm font-black text-white">R$ 75,90</span>
             </div>
         </div>
