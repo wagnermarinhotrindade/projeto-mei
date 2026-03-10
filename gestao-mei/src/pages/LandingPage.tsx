@@ -176,6 +176,12 @@ const LandingPage: React.FC = () => {
 
                     <div className="flex items-center gap-6">
                         <Link
+                            to="/blog"
+                            className="text-sm font-semibold text-white/70 hover:text-white transition-colors"
+                        >
+                            Blog
+                        </Link>
+                        <Link
                             to="/auth"
                             className="text-sm font-semibold text-white/70 hover:text-white transition-colors"
                         >

@@ -10,7 +10,8 @@ import {
     Gem,
     User,
     X,
-    MessageSquare
+    MessageSquare,
+    FileText
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -23,6 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+        { icon: FileText, label: 'Blog', path: '/blog' },
         { icon: ShoppingCart, label: 'Lançamentos', path: '/transactions' },
         { icon: FileBarChart, label: 'Relatórios', path: '/reports' },
         { icon: MessageSquare, label: 'Feedback', path: '/feedback' },

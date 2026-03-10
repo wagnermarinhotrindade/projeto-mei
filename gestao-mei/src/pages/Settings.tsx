@@ -9,7 +9,8 @@ import {
     Save,
     ChevronRight,
     LogOut,
-    Loader2
+    Loader2,
+    FileText
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
@@ -245,6 +246,22 @@ const Settings: React.FC = () => {
                             <h2 className="text-xl font-black">Documentação Legal</h2>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                 <a 
+                                    href="/blog" 
+                                    className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/5 transition-all group"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-white/40 group-hover:text-primary transition-colors">
+                                            <FileText size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold">Blog do Gestor</p>
+                                            <p className="text-[10px] text-white/40 font-medium">Dicas e tutorias para MEI</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight size={16} className="text-white/20 group-hover:translate-x-1 transition-all" />
+                                </a>
+
                                 <a 
                                     href="/termos" 
                                     className="flex items-center justify-between p-6 bg-white/[0.02] border border-white/5 rounded-3xl hover:bg-white/5 transition-all group"
