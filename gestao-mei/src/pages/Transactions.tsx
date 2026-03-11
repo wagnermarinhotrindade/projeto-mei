@@ -36,7 +36,7 @@ import {
     QrCode,
 } from 'lucide-react';
 import { createWorker } from 'tesseract.js';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
 
@@ -147,28 +147,61 @@ const Transactions: React.FC = () => {
 
     // --- QR Code Scanner Lifecycle ---
     useEffect(() => {
-        let scanner: any = null;
-        if (isScannerOpen) {
-            scanner = new Html5QrcodeScanner(
-                "reader",
-                { fps: 10, qrbox: { width: 250, height: 250 } },
-                /* verbose= */ false
-            );
-            
-            scanner.render(
-                (decodedText: string) => {
-                    handleNfceScan(decodedText);
-                    scanner.clear();
-                    setIsScannerOpen(false);
-                },
-                (error: any) => {
-                    // console.warn(error);
+        let html5QrCode: Html5Qrcode | null = null;
+        
+        const startScanner = async () => {
+            if (isScannerOpen) {
+                // Aguarda um frame para garantir que o elemento #reader está no DOM
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const element = document.getElementById("reader");
+                if (!element) return;
+
+                html5QrCode = new Html5Qrcode("reader");
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                
+                try {
+                    await html5QrCode.start(
+                        { facingMode: "environment" },
+                        config,
+                        (decodedText: string) => {
+                            handleNfceScan(decodedText);
+                            if (html5QrCode) {
+                                html5QrCode.stop().then(() => {
+                                    setIsScannerOpen(false);
+                                }).catch(err => console.error("Error stopping scanner:", err));
+                            }
+                        },
+                        (errorMessage: string) => {
+                            // Ignorar erros de scan (falha ao encontrar QR no frame)
+                        }
+                    );
+                } catch (err) {
+                    console.error("Erro ao iniciar câmera:", err);
+                    // Se falhar o modo environment, tenta qualquer câmera disponível
+                    try {
+                        await html5QrCode?.start(
+                            { facingMode: "user" }, // Fallback para câmera frontal
+                            config,
+                            (decodedText: string) => {
+                                handleNfceScan(decodedText);
+                                html5QrCode?.stop().then(() => setIsScannerOpen(false));
+                            },
+                            (error: string) => {} // Adicionado callback de erro vazio
+                        );
+                    } catch (finalErr) {
+                        alert("Não foi possível acessar a câmera. Verifique se o site tem permissão ou se você está usando HTTPS.");
+                        setIsScannerOpen(false);
+                    }
                 }
-            );
-        }
+            }
+        };
+
+        startScanner();
+
         return () => {
-            if (scanner) {
-                scanner.clear().catch((error: any) => console.error("Failed to clear scanner", error));
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => console.error("Error clearing scanner on unmount:", err));
             }
         };
     }, [isScannerOpen]);
@@ -1029,7 +1062,7 @@ const Transactions: React.FC = () => {
                                                                 <X size={20} />
                                                             </button>
                                                         </div>
-                                                        <div id="reader" className="w-full rounded-2xl overflow-hidden bg-black border border-white/5" />
+                                                        <div id="reader" className="w-full rounded-2xl overflow-hidden bg-black border border-white/5 min-h-[300px]" style={{ aspectRatio: '1/1' }} />
                                                         <p className="mt-6 text-center text-xs text-white/30 font-bold px-4">
                                                             Aponte a câmera para o QR Code da Nota Fiscal. Ative a lanterna se necessário.
                                                         </p>
