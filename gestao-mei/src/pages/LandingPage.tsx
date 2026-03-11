@@ -12,7 +12,8 @@ import {
     Activity,
     CheckCircle2,
     Cloud,
-    Shield
+    Shield,
+    QrCode
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
@@ -223,6 +224,69 @@ const LandingPage: React.FC = () => {
                             Começar Agora Gratuitamente
                             <ArrowRight size={20} />
                         </button>
+                    </div>
+                </section>
+                
+                {/* QR Code Highlight Section */}
+                <section className="py-24 relative overflow-hidden">
+                    <div className="absolute top-1/2 left-0 w-96 h-96 bg-red-600/5 rounded-full blur-[120px] -translate-x-1/2" />
+                    <div className="container mx-auto px-6">
+                        <div className="max-w-6xl mx-auto bg-gradient-to-br from-[#121212] to-[#0a0a0a] border border-white/10 rounded-[48px] p-8 md:p-16 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(220,38,38,0.1),transparent_50%)]" />
+                            
+                            <div className="grid lg:grid-cols-2 gap-16 items-center relative z-10">
+                                <div>
+                                    <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-black mb-8 uppercase tracking-[4px]">
+                                        <QrCode size={18} />
+                                        Inovação Digital
+                                    </div>
+                                    
+                                    <h2 className="text-4xl md:text-6xl font-black mb-8 leading-[1.1] tracking-tighter">
+                                        📱 Lançamento Instantâneo com <span className="text-red-500">QR Code</span>
+                                    </h2>
+                                    
+                                    <p className="text-xl text-white/50 mb-10 leading-relaxed font-medium">
+                                        "Tire o peso do trabalho manual das suas costas. Com o Gestão MEI, você registra suas compras apenas apontando o celular. Nossa tecnologia exclusiva extrai valores e datas instantaneamente, garantindo que seu faturamento esteja sempre sob controle e pronto para o Leão."
+                                    </p>
+                                    
+                                    <button
+                                        onClick={handleCTA}
+                                        className="w-full sm:w-auto bg-white text-black hover:bg-red-500 hover:text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[2px] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-white/5 flex items-center justify-center gap-3"
+                                    >
+                                        Experimentar Automação Grátis
+                                        <Zap size={16} />
+                                    </button>
+                                </div>
+                                
+                                <div className="relative">
+                                    <Floating3D>
+                                        <div className="relative rounded-[32px] overflow-hidden border border-white/10 shadow-2xl">
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-red-600/20 to-transparent z-10" />
+                                            <img 
+                                                src="/scaneando.png" 
+                                                alt="Celular escaneando QR Code de nota fiscal com o app Gestão MEI" 
+                                                className="w-full h-auto aspect-[4/5] object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-700" 
+                                            />
+                                            {/* Scanner Animation Overlay */}
+                                            <div className="absolute top-0 left-0 w-full h-1 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] z-20 animate-scanner-line" />
+                                        </div>
+                                    </Floating3D>
+                                    
+                                    {/* Tech Badges */}
+                                    <div className="absolute -bottom-6 -left-6 bg-[#1A1A1A] border border-white/10 p-6 rounded-3xl shadow-2xl z-30 hidden md:block animate-float">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
+                                                <Zap className="text-green-500 fill-green-500" size={24} />
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-1">Status</p>
+                                                <p className="text-lg font-bold">100% Automatizado</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 

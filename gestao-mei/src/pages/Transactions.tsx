@@ -33,6 +33,7 @@ import {
     Tag,
     HelpCircle,
     Camera,
+    Info,
     QrCode,
 } from 'lucide-react';
 import { createWorker } from 'tesseract.js';
@@ -202,9 +203,20 @@ const Transactions: React.FC = () => {
                 };
 
                 const config = { 
-                    fps: 15, 
+                    fps: 30, // Máxima taxa de quadros
                     qrbox: qrBoxFunction,
-                    aspectRatio: 1.0 // Força o viewfinder a ser quadrado
+                    disableFlip: false, // Importante para algumas câmeras frontais
+                    videoConstraints: {
+                        facingMode: "environment",
+                        focusMode: { ideal: "continuous" },
+                        whiteBalanceMode: { ideal: "continuous" },
+                        exposureMode: { ideal: "continuous" },
+                        width: { min: 640, ideal: 1920 },
+                        height: { min: 480, ideal: 1080 }
+                    },
+                    experimentalFeatures: {
+                        useBarCodeDetectorIfSupported: true 
+                    }
                 };
                 
                 try {
@@ -212,32 +224,39 @@ const Transactions: React.FC = () => {
                         { facingMode: "environment" },
                         config,
                         (decodedText: string) => {
-                            playSuccessSound(); // Feedback instantâneo
-                            handleNfceScan(decodedText);
-                            
-                            if (html5QrCode) {
-                                html5QrCode.stop().then(() => {
-                                    setIsScannerOpen(false);
-                                }).catch(err => console.error("Error stopping scanner:", err));
+                            if (decodedText.indexOf('http') !== -1) { // Mais flexível que startsWith
+                                playSuccessSound();
+                                handleNfceScan(decodedText);
+                                if (html5QrCode) {
+                                    html5QrCode.stop().then(() => {
+                                        setIsScannerOpen(false);
+                                    }).catch(err => console.error("Error stopping scanner:", err));
+                                }
+                            } else {
+                                setOcrFeedback("Conteúdo detectado, mas não parece ser uma Nota Fiscal.");
+                                setTimeout(() => setOcrFeedback(null), 3000);
                             }
                         },
-                        () => {} // Ignorar erros de leitura de frame
+                        () => {} 
                     );
                 } catch (err) {
                     console.error("Erro ao iniciar câmera:", err);
                     try {
+                        // Tenta sem restrições pesadas de resolução se falhar
                         await html5QrCode?.start(
                             { facingMode: "user" },
-                            config,
+                            { fps: 20, qrbox: qrBoxFunction },
                             (decodedText: string) => {
-                                playSuccessSound();
-                                handleNfceScan(decodedText);
-                                html5QrCode?.stop().then(() => setIsScannerOpen(false));
+                                if (decodedText.indexOf('http') !== -1) {
+                                    playSuccessSound();
+                                    handleNfceScan(decodedText);
+                                    html5QrCode?.stop().then(() => setIsScannerOpen(false));
+                                }
                             },
-                            (error: string) => {}
+                            () => {}
                         );
                     } catch (finalErr) {
-                        alert("Certifique-se de que o site tem permissão de câmera e está em HTTPS.");
+                        alert("Erro de Câmera: Verifique as permissões de acesso.");
                         setIsScannerOpen(false);
                     }
                 }
@@ -275,15 +294,24 @@ const Transactions: React.FC = () => {
 
             if (response.ok) {
                 const result = await response.json();
+                
+                const hasData = result.valor !== '0,00';
+                
                 setFormData(prev => ({
                     ...prev,
                     valor: result.valor || prev.valor,
                     data: result.data || prev.data,
                     descricao: result.descricao || prev.descricao,
-                    tipo: 'Despesa (Saiu Dinheiro)', // NFC-e geralmente é despesa
-                    categoria: 'Compra de Mercadoria' // Categoria padrão
+                    tipo: 'Despesa (Saiu Dinheiro)',
+                    categoria: 'Compra de Mercadoria'
                 }));
-                setOcrFeedback('Nota Fiscal processada com sucesso! Revise os campos preenchidos.');
+
+                if (hasData) {
+                    setOcrFeedback('Nota Fiscal processada com sucesso!');
+                } else {
+                    setOcrFeedback('Nota com Captcha detectado. Preencha apenas o valor manualmente.');
+                }
+                
                 setTimeout(() => setOcrFeedback(null), 8000);
             } else {
                 const error = await response.json();
@@ -1109,9 +1137,19 @@ const Transactions: React.FC = () => {
                                                                 <X size={20} />
                                                             </button>
                                                         </div>
+
+                                                        {/* Área da Câmera */}
                                                         <div id="reader" className="w-full rounded-2xl overflow-hidden bg-black border border-white/5 min-h-[300px]" style={{ aspectRatio: '1/1' }} />
-                                                        <p className="mt-6 text-center text-xs text-white/30 font-bold px-4">
-                                                            Aponte a câmera para o QR Code da Nota Fiscal. Ative a lanterna se necessário.
+                                                        
+                                                        <div className="mt-6 flex items-start gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10 text-[10px] text-primary">
+                                                            <Info size={14} className="mt-0.5 flex-shrink-0" />
+                                                            <p className="font-bold leading-relaxed">
+                                                                <b>DICA:</b> Mantenha a câmera a uns 15cm do código. Se estiver escuro, ative a lanterna do celular. O "Beep" confirmará a leitura.
+                                                            </p>
+                                                        </div>
+
+                                                        <p className="mt-4 text-center text-[9px] text-white/20 font-black uppercase tracking-widest">
+                                                            Posicione o QR Code no centro do quadrado
                                                         </p>
                                                     </div>
                                                 </div>

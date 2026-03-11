@@ -5,6 +5,14 @@ import SEO from '../../components/layout/SEO';
 
 const blogPosts = [
     {
+        title: "Gestão MEI revoluciona: Lançamento de notas fiscais via QR Code agora com 'Tecnologia de Leitura Direta'",
+        slug: "tecnologia-leitura-direta-nfce",
+        excerpt: "Microempreendedores do Amapá e de todo o Brasil agora podem automatizar seu livro caixa em menos de 1 segundo, pulando as barreiras dos sites do governo.",
+        date: "11 de Março, 2026",
+        category: "Inovação",
+        image: "/scaneando.png"
+    },
+    {
         title: "Como fazer o Livro Caixa do MEI em segundos usando Inteligência Artificial (OCR)",
         slug: "livro-caixa-mei-ia",
         excerpt: "Descubra como a tecnologia OCR pode automatizar seu controle financeiro, economizando horas de trabalho manual e evitando erros na declaração.",
