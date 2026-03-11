@@ -85,6 +85,7 @@ const Transactions: React.FC = () => {
     const [ocrFeedback, setOcrFeedback] = useState<string | null>(null);
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [isNfceLoading, setIsNfceLoading] = useState(false);
+    const [isFlashOn, setIsFlashOn] = useState(false);
 
     const handleUpgrade = async (priceId: string = 'price_1T2cFGLjW93jPn5yJDSCAKev') => {
         if (!user) return;
@@ -184,34 +185,25 @@ const Transactions: React.FC = () => {
         
         const startScanner = async () => {
             if (isScannerOpen) {
-                // Aguarda um frame para garantir que o elemento #reader está no DOM
                 await new Promise(resolve => setTimeout(resolve, 100));
-                
                 const element = document.getElementById("reader");
                 if (!element) return;
 
                 html5QrCode = new Html5Qrcode("reader");
                 
-                // Configuração otimizada para ser um quadrado perfeito e fixo de 250px
-                const qrBoxSize = 250;
-
                 const config = { 
-                    fps: 50, // Aumentada a sensibilidade (FPS) para leitura mais rápida
-                    qrbox: { width: qrBoxSize, height: qrBoxSize },
-                    formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ], // Foco Total em QR Code
+                    fps: 50, 
+                    qrbox: { width: 250, height: 250 },
+                    formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
                     disableFlip: false,
                     videoConstraints: {
                         facingMode: "environment",
                         focusMode: { ideal: "continuous" },
-                        whiteBalanceMode: { ideal: "continuous" },
-                        exposureMode: { ideal: "continuous" },
                         width: { min: 640, ideal: 1920 },
                         height: { min: 480, ideal: 1080 }
                     },
-                    experimentalFeatures: {
-                        useBarCodeDetectorIfSupported: true 
-                    },
-                    aspectRatio: 1.0 // Força proporção quadrada na captura
+                    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+                    aspectRatio: 1.0
                 };
                 
                 try {
@@ -219,55 +211,68 @@ const Transactions: React.FC = () => {
                         { facingMode: "environment" },
                         config,
                         (decodedText: string) => {
-                            // Validação flexível: qualquer URL que contenha 'sefaz' e '.gov.br'
                             const isSefazUrl = decodedText.toLowerCase().includes('sefaz') && decodedText.toLowerCase().includes('.gov.br');
-                            const isUrl = decodedText.startsWith('http');
-
-                            if (isSefazUrl || isUrl) { 
+                            if (isSefazUrl || decodedText.startsWith('http')) { 
                                 playSuccessSound();
                                 handleNfceScan(decodedText);
-                                if (html5QrCode) {
-                                    html5QrCode.stop().then(() => {
-                                        setIsScannerOpen(false);
-                                    }).catch(err => console.error("Error stopping scanner:", err));
-                                }
-                            } else {
-                                setOcrFeedback("QR Code detectado, mas não parece ser um link de Nota Fiscal SEFAZ.");
-                                setTimeout(() => setOcrFeedback(null), 3000);
+                                html5QrCode?.stop().then(() => setIsScannerOpen(false));
                             }
                         },
                         (errorMessage: string) => {
-                            // Log de debug para identificar problemas de leitura no cupom real
                             if (errorMessage.indexOf("NotFoundException") === -1) {
                                 console.log(`QR Scanner Debug: ${errorMessage}`);
                             }
                         } 
                     );
+
+                    // Auto-zoom após 4s
+                    setTimeout(() => {
+                        if (html5QrCode?.getState() === 2) {
+                            const track = (html5QrCode as any).getRunningTrack();
+                            const capabilities = track.getCapabilities() as any;
+                            if (capabilities.zoom) {
+                                track.applyConstraints({ advanced: [{ zoom: capabilities.zoom.max / 2 }] } as any);
+                            }
+                        }
+                    }, 4000);
+
                 } catch (err) {
-                    console.error("Erro ao iniciar câmera:", err);
+                    console.error("Scanner fallback:", err);
                     try {
-                        // Tenta sem restrições pesadas de resolução se falhar
                         await html5QrCode?.start(
                             { facingMode: "user" },
-                            { fps: 20, qrbox: { width: 250, height: 250 } },
+                            { fps: 30, qrbox: { width: 250, height: 250 } },
                             (decodedText: string) => {
-                                const isSefazUrl = decodedText.toLowerCase().includes('sefaz') && decodedText.toLowerCase().includes('.gov.br');
-                                if (isSefazUrl || decodedText.startsWith('http')) {
+                                if (decodedText.startsWith('http')) {
                                     playSuccessSound();
                                     handleNfceScan(decodedText);
                                     html5QrCode?.stop().then(() => setIsScannerOpen(false));
                                 }
                             },
-                            (errorMessage: string) => {
-                                if (errorMessage.indexOf("NotFoundException") === -1) {
-                                    console.log(`QR Scanner Fallback Debug: ${errorMessage}`);
-                                }
-                            }
+                            () => {}
                         );
-                    } catch (finalErr) {
-                        alert("Erro de Câmera: Verifique as permissões de acesso.");
+                    } catch (e) {
                         setIsScannerOpen(false);
                     }
+                }
+            }
+        };
+
+        // Função global para o botão da UI acessar
+        (window as any).toggleScannerFlash = async () => {
+            if (html5QrCode?.getState() === 2) {
+                try {
+                    const track = (html5QrCode as any).getRunningTrack();
+                    const capabilities = track.getCapabilities() as any;
+                    if (capabilities.torch) {
+                        const newFlashState = !isFlashOn;
+                        await track.applyConstraints({ advanced: [{ torch: newFlashState }] } as any);
+                        setIsFlashOn(newFlashState);
+                    } else {
+                        alert("Lanterna não suportada.");
+                    }
+                } catch (e) {
+                    console.error("Error toggling flash:", e);
                 }
             }
         };
@@ -276,8 +281,9 @@ const Transactions: React.FC = () => {
 
         return () => {
             if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().catch(err => console.error("Error sub-mounting scanner:", err));
+                html5QrCode.stop().catch(() => {});
             }
+            delete (window as any).toggleScannerFlash;
         };
     }, [isScannerOpen]);
 
@@ -1153,11 +1159,20 @@ const Transactions: React.FC = () => {
                                                         
                                                         {/* Fix: Container and reader styling - More "open" for better field of view */}
                                                         <div className="mx-auto w-[300px] h-[300px] sm:w-[350px] sm:h-[350px] rounded-[40px] overflow-hidden border-2 border-primary/30 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative">
-                                                            <div id="reader" className="w-full h-full [&>video]:object-cover"></div>
+                                                            {/* CSS Filters para melhorar o contraste do papel (ajuda a IA) */}
+                                                            <div id="reader" className="w-full h-full [&>video]:object-cover [&>video]:contrast-[1.2] [&>video]:brightness-[1.1] grayscale-[0.3]"></div>
                                                             
                                                             {/* Scanning Line Animation Overlay */}
                                                             <div className="absolute top-0 left-0 w-full h-1 bg-primary shadow-[0_0_15px_rgba(246,85,85,0.8)] z-50 animate-scanner-line pointer-events-none" />
                                                             
+                                                            {/* Torch Button Overlay */}
+                                                            <button 
+                                                                onClick={() => (window as any).toggleScannerFlash?.()}
+                                                                className={`absolute bottom-6 right-6 p-4 rounded-full transition-all z-[60] border shadow-2xl ${isFlashOn ? 'bg-primary text-white border-primary shadow-primary/40' : 'bg-black/60 text-white/60 border-white/20 hover:bg-black/80'}`}
+                                                            >
+                                                                <Zap size={24} fill={isFlashOn ? "currentColor" : "none"} />
+                                                            </button>
+
                                                             {/* Subtle Corner Markers instead of heavy border */}
                                                             <div className="absolute inset-8 border border-white/10 rounded-3xl pointer-events-none" />
                                                         </div>
