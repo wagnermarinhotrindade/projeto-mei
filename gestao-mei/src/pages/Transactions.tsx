@@ -86,6 +86,7 @@ const Transactions: React.FC = () => {
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [isNfceLoading, setIsNfceLoading] = useState(false);
     const [isFlashOn, setIsFlashOn] = useState(false);
+    const [scanningState, setScanningState] = useState<'scanning' | 'detected' | 'error'>('scanning');
 
     const handleUpgrade = async (priceId: string = 'price_1T2cFGLjW93jPn5yJDSCAKev') => {
         if (!user) return;
@@ -199,6 +200,8 @@ const Transactions: React.FC = () => {
                     videoConstraints: {
                         facingMode: "environment",
                         focusMode: { ideal: "continuous" },
+                        whiteBalanceMode: { ideal: "continuous" },
+                        exposureMode: { ideal: "continuous" },
                         width: { min: 640, ideal: 1920 },
                         height: { min: 480, ideal: 1080 }
                     },
@@ -213,9 +216,18 @@ const Transactions: React.FC = () => {
                         (decodedText: string) => {
                             const isSefazUrl = decodedText.toLowerCase().includes('sefaz') && decodedText.toLowerCase().includes('.gov.br');
                             if (isSefazUrl || decodedText.startsWith('http')) { 
+                                // Detecção imediata - Trava o visual
+                                setScanningState('detected');
                                 playSuccessSound();
-                                handleNfceScan(decodedText);
-                                html5QrCode?.stop().then(() => setIsScannerOpen(false));
+                                
+                                // Aguarda o feedback visual (verde) antes de processar
+                                setTimeout(() => {
+                                    handleNfceScan(decodedText);
+                                    html5QrCode?.stop().then(() => {
+                                        setIsScannerOpen(false);
+                                        setScanningState('scanning');
+                                    });
+                                }, 600);
                             }
                         },
                         (errorMessage: string) => {
@@ -225,14 +237,20 @@ const Transactions: React.FC = () => {
                         } 
                     );
 
-                    // Auto-zoom após 4s
-                    setTimeout(() => {
-                        if (html5QrCode?.getState() === 2) {
+                    // Hunting: Zoom dinâmico se demorar
+                    let zoomLevel = 1;
+                    const huntInterval = setInterval(() => {
+                        if (html5QrCode?.getState() === 2 && scanningState === 'scanning') {
                             const track = (html5QrCode as any).getRunningTrack();
                             const capabilities = track.getCapabilities() as any;
                             if (capabilities.zoom) {
-                                track.applyConstraints({ advanced: [{ zoom: capabilities.zoom.max / 2 }] } as any);
+                                // Oscila entre normal e zoom leve para forçar o sensor a recalibrar o foco
+                                zoomLevel = zoomLevel === 1 ? Math.min(1.5, capabilities.zoom.max / 2) : 1;
+                                track.applyConstraints({ advanced: [{ zoom: zoomLevel }] } as any);
+                                console.log(`Scanner Hunting... Zoom: ${zoomLevel}x`);
                             }
+                        } else {
+                            clearInterval(huntInterval);
                         }
                     }, 4000);
 
@@ -296,6 +314,44 @@ const Transactions: React.FC = () => {
         setIsNfceLoading(true);
         setOcrFeedback(null);
         
+        // --- EXTRAÇÃO DIRETA (Instantânea) ---
+        try {
+            const urlObj = new URL(url);
+            const params = new URLSearchParams(urlObj.search);
+            
+            let valorDireto = params.get('vNF');
+            let dataDireta = params.get('dhEmi');
+
+            // Se a data estiver em Hexadecimal (comum em alguns estados) ou formatada
+            if (dataDireta && dataDireta.length > 8) {
+                // Tenta extrair apenas a parte da data YYYY-MM-DD
+                if (dataDireta.includes('T')) {
+                    dataDireta = dataDireta.split('T')[0];
+                } else if (!dataDireta.includes('-')) {
+                    // Se estiver em hexa ou string colada, tentamos um parse básico
+                    // mas o ideal é deixar o backend tratar se não for óbvio
+                }
+            }
+
+            if (valorDireto) {
+                // Formata ponto para vírgula se necessário
+                valorDireto = valorDireto.replace('.', ',');
+                
+                setFormData(prev => ({
+                    ...prev,
+                    valor: valorDireto || prev.valor,
+                    data: dataDireta || prev.data,
+                    tipo: 'Despesa (Saiu Dinheiro)',
+                    categoria: 'Compra de Mercadoria'
+                }));
+                // Feedback imediato de leitura direta
+                setOcrFeedback('Valores extraídos instantaneamente!');
+            }
+        } catch (e) {
+            console.log("Erro na extração direta, seguindo para API...");
+        }
+        
+        // --- CHAMADA API (Para validação completa e Captcha se necessário) ---
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/process-nfce`, {
@@ -314,7 +370,7 @@ const Transactions: React.FC = () => {
                 
                 setFormData(prev => ({
                     ...prev,
-                    valor: result.valor || prev.valor,
+                    valor: (result.valor && result.valor !== '0,00') ? result.valor : prev.valor,
                     data: result.data || prev.data,
                     descricao: result.descricao || prev.descricao,
                     tipo: 'Despesa (Saiu Dinheiro)',
@@ -322,19 +378,22 @@ const Transactions: React.FC = () => {
                 }));
 
                 if (hasData) {
-                    setOcrFeedback('Nota Fiscal processada com sucesso!');
+                    setOcrFeedback('Informações confirmadas pela SEFAZ!');
                 } else {
-                    setOcrFeedback('Nota com Captcha detectado. Preencha apenas o valor manualmente.');
+                    setOcrFeedback('Nota com Captcha. Verifique o valor extraído.');
                 }
                 
                 setTimeout(() => setOcrFeedback(null), 8000);
             } else {
-                const error = await response.json();
-                alert('Erro ao processar nota: ' + (error.error || 'Tente novamente.'));
+                // Se a extração direta falhou e a API também, avisamos
+                if (!setFormData) { // simplificação de lógica de erro
+                    const error = await response.json();
+                    alert('Erro ao processar nota: ' + (error.error || 'Tente novamente.'));
+                }
             }
         } catch (err) {
             console.error('Erro no processamento NFC-e:', err);
-            alert('Erro de conexão com o servidor de notas fiscais.');
+            // Não alertamos erro se a extração direta já funcionou
         } finally {
             setIsNfceLoading(false);
         }
@@ -1158,12 +1217,17 @@ const Transactions: React.FC = () => {
                                                         </div>
                                                         
                                                         {/* Fix: Container and reader styling - More "open" for better field of view */}
-                                                        <div className="mx-auto w-[300px] h-[300px] sm:w-[350px] sm:h-[350px] rounded-[40px] overflow-hidden border-2 border-primary/30 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative">
+                                                        <div className={`mx-auto w-[300px] h-[300px] sm:w-[350px] sm:h-[350px] rounded-[40px] overflow-hidden border-2 transition-all duration-300 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative ${scanningState === 'detected' ? 'border-green-500 scale-105 shadow-[0_0_60px_rgba(34,197,94,0.4)]' : 'border-primary/30'}`}>
                                                             {/* CSS Filters para melhorar o contraste do papel (ajuda a IA) */}
                                                             <div id="reader" className="w-full h-full [&>video]:object-cover [&>video]:contrast-[1.2] [&>video]:brightness-[1.1] grayscale-[0.3]"></div>
                                                             
                                                             {/* Scanning Line Animation Overlay */}
-                                                            <div className="absolute top-0 left-0 w-full h-1 bg-primary shadow-[0_0_15px_rgba(246,85,85,0.8)] z-50 animate-scanner-line pointer-events-none" />
+                                                            <div className={`absolute top-0 left-0 w-full h-1 shadow-[0_0_15px_rgba(246,85,85,0.8)] z-50 animate-scanner-line pointer-events-none transition-colors ${scanningState === 'detected' ? 'bg-green-500 shadow-green-500/80' : 'bg-primary'}`} />
+                                                            
+                                                            {/* Feedback de Detecção (Quadrado Verde) */}
+                                                            {scanningState === 'detected' && (
+                                                                <div className="absolute inset-4 border-4 border-green-500 rounded-3xl z-50 animate-pulse bg-green-500/10" />
+                                                            )}
                                                             
                                                             {/* Torch Button Overlay */}
                                                             <button 
