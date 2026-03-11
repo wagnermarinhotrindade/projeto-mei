@@ -218,7 +218,11 @@ const Transactions: React.FC = () => {
                         { facingMode: "environment" },
                         config,
                         (decodedText: string) => {
-                            if (decodedText.indexOf('http') !== -1) { // Mais flexível que startsWith
+                            // Validação flexível: qualquer URL que contenha 'sefaz' e '.gov.br'
+                            const isSefazUrl = decodedText.toLowerCase().includes('sefaz') && decodedText.toLowerCase().includes('.gov.br');
+                            const isUrl = decodedText.startsWith('http');
+
+                            if (isSefazUrl || isUrl) { 
                                 playSuccessSound();
                                 handleNfceScan(decodedText);
                                 if (html5QrCode) {
@@ -227,7 +231,7 @@ const Transactions: React.FC = () => {
                                     }).catch(err => console.error("Error stopping scanner:", err));
                                 }
                             } else {
-                                setOcrFeedback("Conteúdo detectado, mas não parece ser uma Nota Fiscal.");
+                                setOcrFeedback("QR Code detectado, mas não parece ser um link de Nota Fiscal SEFAZ.");
                                 setTimeout(() => setOcrFeedback(null), 3000);
                             }
                         },
@@ -246,7 +250,8 @@ const Transactions: React.FC = () => {
                             { facingMode: "user" },
                             { fps: 20, qrbox: { width: 250, height: 250 } },
                             (decodedText: string) => {
-                                if (decodedText.indexOf('http') !== -1) {
+                                const isSefazUrl = decodedText.toLowerCase().includes('sefaz') && decodedText.toLowerCase().includes('.gov.br');
+                                if (isSefazUrl || decodedText.startsWith('http')) {
                                     playSuccessSound();
                                     handleNfceScan(decodedText);
                                     html5QrCode?.stop().then(() => setIsScannerOpen(false));
@@ -1145,12 +1150,15 @@ const Transactions: React.FC = () => {
                                                             </button>
                                                         </div>
                                                         
-                                                        {/* Fix: Container and reader styling */}
-                                                        <div className="rounded-[40px] overflow-hidden border-2 border-primary/30 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative aspect-square">
-                                                            <div id="reader" className="w-full h-full scale-110"></div>
+                                                        {/* Fix: Container and reader styling - Adjusted for smaller screens */}
+                                                        <div className="mx-auto w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] rounded-[40px] overflow-hidden border-2 border-primary/30 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative">
+                                                            <div id="reader" className="w-full h-full scale-125"></div>
                                                             
                                                             {/* Scanning Line Animation Overlay */}
                                                             <div className="absolute top-0 left-0 w-full h-1 bg-primary shadow-[0_0_15px_rgba(246,85,85,0.8)] z-50 animate-scanner-line pointer-events-none" />
+                                                            
+                                                            {/* Darken edges to focus on center 250px */}
+                                                            <div className="absolute inset-0 border-[15px] sm:border-[35px] border-black/40 pointer-events-none" />
                                                         </div>
 
                                                         <p className="mt-8 text-center text-xs text-white/40 font-bold leading-relaxed px-6">
