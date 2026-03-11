@@ -85,8 +85,6 @@ const Transactions: React.FC = () => {
     const [ocrFeedback, setOcrFeedback] = useState<string | null>(null);
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [isNfceLoading, setIsNfceLoading] = useState(false);
-    const [isFlashOn, setIsFlashOn] = useState(false);
-    const [isMacroMode, setIsMacroMode] = useState(false);
     const [scanningState, setScanningState] = useState<'scanning' | 'detected' | 'error'>('scanning');
 
     const handleUpgrade = async (priceId: string = 'price_1T2cFGLjW93jPn5yJDSCAKev') => {
@@ -194,7 +192,7 @@ const Transactions: React.FC = () => {
                 html5QrCode = new Html5Qrcode("reader");
                 
                 const config = { 
-                    fps: 30, // 30 FPS é mais estável para processamento em webview
+                    fps: 30, 
                     qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
                         const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
                         const size = Math.floor(minEdge * 0.75);
@@ -205,10 +203,10 @@ const Transactions: React.FC = () => {
                     videoConstraints: {
                         facingMode: "environment",
                         focusMode: { ideal: "continuous" },
-                        whiteBalanceMode: { ideal: "continuous" },
                         exposureMode: { ideal: "continuous" },
-                        width: { min: 640, ideal: 1920 },
-                        height: { min: 480, ideal: 1080 }
+                        whiteBalanceMode: { ideal: "continuous" },
+                        width: { min: 1280, ideal: 1920, max: 2560 },
+                        height: { min: 720, ideal: 1080, max: 1440 }
                     },
                     experimentalFeatures: { useBarCodeDetectorIfSupported: true },
                     aspectRatio: 1.0
@@ -242,25 +240,20 @@ const Transactions: React.FC = () => {
                         } 
                     );
 
-                    // Hunting: Zoom dinâmico se demorar
+                    // Hunting: Zoom leve para ajudar no foco inicial
                     let zoomLevel = 1;
                     const huntInterval = setInterval(() => {
-                        if (html5QrCode?.getState() === 2 && scanningState === 'scanning' && !isMacroMode) {
+                        if (html5QrCode?.getState() === 2 && scanningState === 'scanning') {
                             const track = (html5QrCode as any).getRunningTrack();
                             const capabilities = track.getCapabilities() as any;
                             if (capabilities.zoom) {
-                                // Oscila entre normal e zoom leve para forçar o sensor a recalibrar o foco
-                                zoomLevel = zoomLevel === 1 ? Math.min(1.5, capabilities.zoom.max / 2) : 1;
+                                zoomLevel = zoomLevel === 1 ? Math.min(1.2, capabilities.zoom.max) : 1;
                                 track.applyConstraints({ advanced: [{ zoom: zoomLevel }] } as any);
-                                console.log(`Scanner Hunting... Zoom: ${zoomLevel}x`);
                             }
-                        } else if (isMacroMode) {
-                            // Não faz hunting no macro para não perder o foco fixo
-                            console.log("Macro Mode Active: Focus Locked.");
                         } else {
                             clearInterval(huntInterval);
                         }
-                    }, 4000);
+                    }, 5000);
 
                 } catch (err) {
                     console.error("Scanner fallback:", err);
@@ -284,70 +277,14 @@ const Transactions: React.FC = () => {
             }
         };
 
-        // Função global para o botão da UI acessar (Lanterna)
-        (window as any).toggleScannerFlash = async () => {
-            if (html5QrCode?.getState() === 2) {
-                try {
-                    const track = (html5QrCode as any).getRunningTrack();
-                    const capabilities = track.getCapabilities() as any;
-                    if (capabilities.torch) {
-                        const newFlashState = !isFlashOn;
-                        await track.applyConstraints({ advanced: [{ torch: newFlashState }] } as any);
-                        setIsFlashOn(newFlashState);
-                    } else {
-                        alert("Lanterna não suportada.");
-                    }
-                } catch (e) {
-                    console.error("Error toggling flash:", e);
-                }
-            }
-        };
-
-        // Função global para Modo Macro (Foco próximo)
-        (window as any).toggleScannerMacro = async () => {
-            if (html5QrCode?.getState() === 2) {
-                try {
-                    const track = (html5QrCode as any).getRunningTrack();
-                    const capabilities = track.getCapabilities() as any;
-                    const newMacroState = !isMacroMode;
-                    
-                    if (newMacroState) {
-                        // Tenta forçar o foco para distância mínima (Macro)
-                        const constraints: any = { advanced: [] };
-                        if (capabilities.focusMode?.includes('manual')) {
-                            constraints.advanced.push({ focusMode: 'manual' });
-                        }
-                        if (capabilities.focusDistance) {
-                            // Menor distância focal possível
-                            constraints.advanced.push({ focusDistance: capabilities.focusDistance.min });
-                        }
-                        await track.applyConstraints(constraints);
-                    } else {
-                        // Volta para foco contínuo automático
-                        await track.applyConstraints({
-                            advanced: [{ focusMode: 'continuous' }]
-                        } as any);
-                    }
-                    
-                    setIsMacroMode(newMacroState);
-                } catch (e) {
-                    console.error("Error toggling macro:", e);
-                    // Se falhar o manual/distância, tentamos pelo menos resetar pro contínuo
-                    setIsMacroMode(false);
-                }
-            }
-        };
-
         startScanner();
 
         return () => {
             if (html5QrCode && html5QrCode.isScanning) {
                 html5QrCode.stop().catch(() => {});
             }
-            delete (window as any).toggleScannerFlash;
-            delete (window as any).toggleScannerMacro;
         };
-    }, [isScannerOpen, isFlashOn, isMacroMode]);
+    }, [isScannerOpen]);
 
     const handleNfceScan = async (url: string) => {
         if (!url.startsWith('http')) {
@@ -1270,8 +1207,8 @@ const Transactions: React.FC = () => {
                                                         
                                                         {/* Fix: Container and reader styling - More "open" for better field of view */}
                                                         <div className={`mx-auto w-[300px] h-[300px] sm:w-[350px] sm:h-[350px] rounded-[40px] overflow-hidden border-2 transition-all duration-300 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative ${scanningState === 'detected' ? 'border-green-500 scale-105 shadow-[0_0_60px_rgba(34,197,94,0.4)]' : 'border-primary/30'}`}>
-                                                            {/* Ajuste de Contraste e Modo Macro */}
-                                                            <div id="reader" className={`w-full h-full [&>video]:object-cover transition-all duration-300 ${isMacroMode ? '[&>video]:contrast-[1.8] [&>video]:brightness-[1.3] [&>video]:grayscale' : '[&>video]:contrast-[1.4] [&>video]:brightness-[1.2]'}`}></div>
+                                                            {/* Ajuste de Contraste Automático Elevado */}
+                                                            <div id="reader" className="w-full h-full [&>video]:object-cover [&>video]:contrast-[1.5] [&>video]:brightness-[1.1] [&>video]:saturate-[1.2]"></div>
                                                             
                                                             {/* Scanning Line Animation Overlay */}
                                                             <div className={`absolute top-0 left-0 w-full h-1 shadow-[0_0_15px_rgba(246,85,85,0.8)] z-50 animate-scanner-line pointer-events-none transition-colors ${scanningState === 'detected' ? 'bg-green-500 shadow-green-500/80' : 'bg-primary'}`} />
@@ -1280,26 +1217,6 @@ const Transactions: React.FC = () => {
                                                             {scanningState === 'detected' && (
                                                                 <div className="absolute inset-4 border-4 border-green-500 rounded-3xl z-50 animate-pulse bg-green-500/10" />
                                                             )}
-                                                            
-                                                            {/* Macro Mode Button Overlay (Thumb Friendly) */}
-                                                            <div className="absolute bottom-6 left-0 right-0 px-6 flex justify-between items-center z-[60]">
-                                                                <button 
-                                                                    onClick={() => (window as any).toggleScannerMacro?.()}
-                                                                    className={`p-5 rounded-full transition-all border shadow-2xl flex items-center justify-center gap-2 ${isMacroMode ? 'bg-primary text-white border-primary shadow-primary/40' : 'bg-black/60 text-white/60 border-white/20 hover:bg-black/80'}`}
-                                                                >
-                                                                    <span className="text-xl">🌷</span>
-                                                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">Modo Macro</span>
-                                                                </button>
-
-                                                                {/* Mantém Lanterna como secundário se houver espaço, ou remove se o usuário pediu substituição estrita. */}
-                                                                {/* O usuário pediu para SUBSTITUIR, então vou remover o ícone de lanterna anterior e deixar só o macro no lugar de destaque. */}
-                                                                <button 
-                                                                    onClick={() => (window as any).toggleScannerFlash?.()}
-                                                                    className={`p-4 rounded-full transition-all border shadow-2xl ${isFlashOn ? 'bg-yellow-500 text-white border-yellow-400' : 'bg-black/60 text-white/60 border-white/10'}`}
-                                                                >
-                                                                    <Zap size={20} fill={isFlashOn ? "currentColor" : "none"} />
-                                                                </button>
-                                                            </div>
 
                                                             {/* Subtle Corner Markers instead of heavy border */}
                                                             <div className="absolute inset-8 border border-white/10 rounded-3xl pointer-events-none" />
