@@ -37,7 +37,7 @@ import {
     QrCode,
 } from 'lucide-react';
 import { createWorker } from 'tesseract.js';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
 
@@ -196,9 +196,10 @@ const Transactions: React.FC = () => {
                 const qrBoxSize = 250;
 
                 const config = { 
-                    fps: 30, // Máxima taxa de quadros
+                    fps: 50, // Aumentada a sensibilidade (FPS) para leitura mais rápida
                     qrbox: { width: qrBoxSize, height: qrBoxSize },
-                    disableFlip: false, // Importante para algumas câmeras frontais
+                    formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ], // Foco Total em QR Code
+                    disableFlip: false,
                     videoConstraints: {
                         facingMode: "environment",
                         focusMode: { ideal: "continuous" },
@@ -230,7 +231,12 @@ const Transactions: React.FC = () => {
                                 setTimeout(() => setOcrFeedback(null), 3000);
                             }
                         },
-                        () => {} 
+                        (errorMessage: string) => {
+                            // Log de debug para identificar problemas de leitura no cupom real
+                            if (errorMessage.indexOf("NotFoundException") === -1) {
+                                console.log(`QR Scanner Debug: ${errorMessage}`);
+                            }
+                        } 
                     );
                 } catch (err) {
                     console.error("Erro ao iniciar câmera:", err);
@@ -246,7 +252,11 @@ const Transactions: React.FC = () => {
                                     html5QrCode?.stop().then(() => setIsScannerOpen(false));
                                 }
                             },
-                            () => {}
+                            (errorMessage: string) => {
+                                if (errorMessage.indexOf("NotFoundException") === -1) {
+                                    console.log(`QR Scanner Fallback Debug: ${errorMessage}`);
+                                }
+                            }
                         );
                     } catch (finalErr) {
                         alert("Erro de Câmera: Verifique as permissões de acesso.");
