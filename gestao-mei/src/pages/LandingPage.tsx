@@ -250,7 +250,7 @@ const LandingPage: React.FC = () => {
                                     </p>
                                     
                                     <button
-                                        onClick={handleCTA}
+                                        onClick={scrollToPricing}
                                         className="w-full sm:w-auto bg-white text-black hover:bg-red-500 hover:text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-[2px] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-white/5 flex items-center justify-center gap-3"
                                     >
                                         Experimentar Automação Grátis
