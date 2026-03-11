@@ -89,6 +89,7 @@ function App() {
         initializeAuth();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+            console.log('Auth Event:', event);
             setSession(currentSession);
 
             if (currentSession?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
@@ -96,9 +97,7 @@ function App() {
                 if (intercepted) return;
             }
 
-            if (event === 'SIGNED_OUT') {
-                setLoading(false);
-            }
+            setLoading(false);
         });
 
         return () => subscription.unsubscribe();
@@ -123,7 +122,10 @@ function App() {
         <Router>
             <FacebookPixelTracker />
             <Routes>
-                <Route path="/" element={<LandingPage />} />
+                <Route
+                    path="/"
+                    element={!session ? <LandingPage /> : <Navigate to="/dashboard" replace />}
+                />
                 <Route
                     path="/auth"
                     element={!session ? <Login /> : <Navigate to="/dashboard" replace />}
