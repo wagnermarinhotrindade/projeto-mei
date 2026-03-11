@@ -32,8 +32,11 @@ import {
     Receipt,
     Tag,
     HelpCircle,
+    Camera,
+    QrCode,
 } from 'lucide-react';
 import { createWorker } from 'tesseract.js';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
 
@@ -79,6 +82,8 @@ const Transactions: React.FC = () => {
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
     const [isOcrLoading, setIsOcrLoading] = useState(false);
     const [ocrFeedback, setOcrFeedback] = useState<string | null>(null);
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
+    const [isNfceLoading, setIsNfceLoading] = useState(false);
 
     const handleUpgrade = async (priceId: string = 'price_1T2cFGLjW93jPn5yJDSCAKev') => {
         if (!user) return;
@@ -139,6 +144,78 @@ const Transactions: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    // --- QR Code Scanner Lifecycle ---
+    useEffect(() => {
+        let scanner: any = null;
+        if (isScannerOpen) {
+            scanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                /* verbose= */ false
+            );
+            
+            scanner.render(
+                (decodedText: string) => {
+                    handleNfceScan(decodedText);
+                    scanner.clear();
+                    setIsScannerOpen(false);
+                },
+                (error: any) => {
+                    // console.warn(error);
+                }
+            );
+        }
+        return () => {
+            if (scanner) {
+                scanner.clear().catch((error: any) => console.error("Failed to clear scanner", error));
+            }
+        };
+    }, [isScannerOpen]);
+
+    const handleNfceScan = async (url: string) => {
+        if (!url.startsWith('http')) {
+            alert('QR Code inválido. Aponte para uma nota fiscal (NFC-e).');
+            return;
+        }
+
+        setIsNfceLoading(true);
+        setOcrFeedback(null);
+        
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/process-nfce`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`,
+                },
+                body: JSON.stringify({ url }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setFormData(prev => ({
+                    ...prev,
+                    valor: result.valor || prev.valor,
+                    data: result.data || prev.data,
+                    descricao: result.descricao || prev.descricao,
+                    tipo: 'Despesa (Saiu Dinheiro)', // NFC-e geralmente é despesa
+                    categoria: 'Compra de Mercadoria' // Categoria padrão
+                }));
+                setOcrFeedback('Nota Fiscal processada com sucesso! Revise os campos preenchidos.');
+                setTimeout(() => setOcrFeedback(null), 8000);
+            } else {
+                const error = await response.json();
+                alert('Erro ao processar nota: ' + (error.error || 'Tente novamente.'));
+            }
+        } catch (err) {
+            console.error('Erro no processamento NFC-e:', err);
+            alert('Erro de conexão com o servidor de notas fiscais.');
+        } finally {
+            setIsNfceLoading(false);
+        }
+    };
 
     const resetForm = () => {
         setFormData({
@@ -859,10 +936,10 @@ const Transactions: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Upload de Comprovante */}
+                                {/* Automação de Lançamento: Foto ou QR Code */}
                                 <div>
                                         <p className="text-[10px] font-black text-white/20 uppercase tracking-[3px] mb-3 flex items-center gap-2">
-                                            <Upload size={12} /> COMPROVANTE (OPCIONAL)
+                                            <Sparkles size={12} className="text-primary" /> AUTOMAÇÃO DE LANÇAMENTO
                                             <button 
                                                 type="button"
                                                 onClick={() => setShowHelpModal(true)}
@@ -872,10 +949,14 @@ const Transactions: React.FC = () => {
                                                 <HelpCircle size={14} />
                                             </button>
                                         </p>
-                                                <div className="relative">
+                                        
+                                        <div className="flex flex-col gap-4">
+                                            <div className="flex gap-4">
+                                                {/* Botão FOTO */}
+                                                <div className="flex-1 relative">
                                                     <label 
                                                         onClick={() => !isPro && handleUpgrade()}
-                                                        className={`flex items-center justify-center gap-3 p-5 rounded-3xl border-2 border-dashed transition-all relative overflow-hidden ${!isPro ? 'border-white/5 bg-white/[0.01] cursor-not-allowed grayscale' : comprovante ? 'border-primary/40 bg-primary/5 cursor-pointer' : 'border-white/10 bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04] cursor-pointer'}`}
+                                                        className={`flex flex-col items-center justify-center gap-3 p-8 rounded-3xl border-2 border-dashed transition-all relative overflow-hidden ${!isPro ? 'border-white/5 bg-white/[0.01] cursor-not-allowed grayscale' : 'border-white/10 bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04] cursor-pointer'}`}
                                                     >
                                                         <input
                                                             type="file"
@@ -885,56 +966,87 @@ const Transactions: React.FC = () => {
                                                             disabled={!isPro}
                                                         />
                                                         {!isPro && (
-                                                            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 p-4">
-                                                                <Lock size={20} className="text-primary mb-2" />
-                                                                <span className="text-[10px] font-black text-white px-4 py-2 uppercase tracking-widest text-center leading-relaxed bg-primary/20 rounded-xl border border-primary/30">
-                                                                    Upload de comprovantes exclusivo para o Plano Pro
-                                                                </span>
+                                                            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 p-2 text-center">
+                                                                <Lock size={16} className="text-primary mb-1" />
+                                                                <span className="text-[8px] font-black text-white uppercase tracking-tighter">Pro</span>
                                                             </div>
                                                         )}
-                                                        {uploadPreview ? (
-                                                            <div className="relative group">
-                                                                <img src={uploadPreview} alt="Preview" className="h-24 w-auto rounded-2xl object-cover border border-white/10" />
-                                                                <div className="absolute inset-0 bg-green-500/20 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <Check size={24} className="text-white" />
-                                                                </div>
-                                                                <p className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] text-green-400 font-black uppercase tracking-widest whitespace-nowrap">Upload Pronto</p>
-                                                            </div>
-                                                        ) : (
-                                                            <div className={!isPro ? 'opacity-20' : ''}>
-                                                                <div className="flex items-center justify-center gap-3">
-                                                                    <Upload size={20} className="text-white/30" />
-                                                                    <span className="text-white/40 text-sm font-bold">
-                                                                        {comprovante ? comprovante.name : 'Arraste ou clique para enviar (JPG, PNG ou PDF)'}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                        <Camera size={28} className={!isPro ? 'text-white/10' : 'text-primary/60'} />
+                                                        <span className="text-xs font-black uppercase tracking-widest text-white/60">📷 Foto</span>
                                                     </label>
+                                                </div>
 
-                                                    {isOcrLoading && (
-                                                        <div className="mt-3 flex items-center gap-3 px-4 py-3 bg-primary/5 border border-primary/10 rounded-2xl animate-pulse">
-                                                            <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                                                            <span className="text-[10px] font-black text-primary uppercase tracking-[2px]">Analisando comprovante com IA...</span>
-                                                        </div>
-                                                    )}
-
-                                                    {comprovante && !isOcrLoading && (
-                                                        <div className="flex items-center gap-4 mt-4 ml-2">
-                                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg">
-                                                                <Check size={12} className="text-green-400" />
-                                                                <span className="text-[10px] font-black text-green-400 uppercase tracking-widest">Arquivo Selecionado</span>
+                                                {/* Botão QR CODE */}
+                                                <div className="flex-1 relative">
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => isPro ? setIsScannerOpen(true) : handleUpgrade()}
+                                                        className={`w-full flex flex-col items-center justify-center gap-3 p-8 rounded-3xl border-2 border-dashed transition-all relative overflow-hidden ${!isPro ? 'border-white/5 bg-white/[0.01] cursor-not-allowed grayscale' : 'border-white/10 bg-white/[0.02] hover:border-primary/30 hover:bg-white/[0.04] cursor-pointer'}`}
+                                                    >
+                                                        {!isPro && (
+                                                            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center z-10 p-2 text-center">
+                                                                <Lock size={16} className="text-primary mb-1" />
+                                                                <span className="text-[8px] font-black text-white uppercase tracking-tighter">Pro</span>
                                                             </div>
-                                                            <button
+                                                        )}
+                                                        <QrCode size={28} className={!isPro ? 'text-white/10' : 'text-primary/60'} />
+                                                        <span className="text-xs font-black uppercase tracking-widest text-white/60">📱 QR Code</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Preview de Upload */}
+                                            {uploadPreview && !isScannerOpen && (
+                                                <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between gap-4 animate-in fade-in">
+                                                    <div className="flex items-center gap-4">
+                                                        <img src={uploadPreview} alt="Preview" className="h-12 w-12 rounded-lg object-cover border border-white/10" />
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-green-400 uppercase tracking-widest">Arquivo Carregado</p>
+                                                            <p className="text-xs font-bold text-white/60 truncate max-w-[150px]">{comprovante?.name}</p>
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => { setComprovante(null); setUploadPreview(null); }}
+                                                        className="p-2 hover:bg-red-500/10 text-red-400/60 hover:text-red-400 rounded-xl transition-all"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* Container do Scanner */}
+                                            {isScannerOpen && (
+                                                <div className="fixed inset-0 z-[250] flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl p-4">
+                                                    <div className="w-full max-w-lg bg-[#121212] border border-white/10 rounded-[40px] p-6 shadow-2xl overflow-hidden relative">
+                                                        <div className="flex items-center justify-between mb-6">
+                                                            <h3 className="text-lg font-black text-white px-2">Escanear Nota Fiscal (NFC-e)</h3>
+                                                            <button 
                                                                 type="button"
-                                                                onClick={() => { setComprovante(null); setUploadPreview(null); }}
-                                                                className="text-[10px] text-red-400/60 hover:text-red-400 font-bold transition-colors"
+                                                                onClick={() => setIsScannerOpen(false)}
+                                                                className="p-3 bg-white/5 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-all"
                                                             >
-                                                                Remover
+                                                                <X size={20} />
                                                             </button>
                                                         </div>
-                                                    )}
+                                                        <div id="reader" className="w-full rounded-2xl overflow-hidden bg-black border border-white/5" />
+                                                        <p className="mt-6 text-center text-xs text-white/30 font-bold px-4">
+                                                            Aponte a câmera para o QR Code da Nota Fiscal. Ative a lanterna se necessário.
+                                                        </p>
+                                                    </div>
                                                 </div>
+                                            )}
+
+                                            {/* Feedback de Carregamento (OCR ou NFCE) */}
+                                            {(isOcrLoading || isNfceLoading) && (
+                                                <div className="flex items-center gap-3 px-6 py-4 bg-primary/5 border border-primary/10 rounded-2xl animate-pulse">
+                                                    <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                                                    <span className="text-[10px] font-black text-primary uppercase tracking-[2px]">
+                                                        {isNfceLoading ? 'Processando nota fiscal com inteligência...' : 'Analisando comprovante com IA...'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                 </div>
 
 
