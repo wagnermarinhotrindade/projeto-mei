@@ -1445,4 +1445,7 @@ const Transactions: React.FC = () => {
     );
 };
 
+// Versão do Scanner para forçar atualização no cache da Vercel: 2026-03-11_v2.0
+export const SCANNER_VERSION = "2.0.1";
+
 export default Transactions;
