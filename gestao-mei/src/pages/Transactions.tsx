@@ -210,7 +210,8 @@ const Transactions: React.FC = () => {
                     },
                     experimentalFeatures: {
                         useBarCodeDetectorIfSupported: true 
-                    }
+                    },
+                    aspectRatio: 1.0 // Força proporção quadrada na captura
                 };
                 
                 try {
@@ -1150,15 +1151,15 @@ const Transactions: React.FC = () => {
                                                             </button>
                                                         </div>
                                                         
-                                                        {/* Fix: Container and reader styling - Adjusted for smaller screens */}
-                                                        <div className="mx-auto w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] rounded-[40px] overflow-hidden border-2 border-primary/30 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative">
-                                                            <div id="reader" className="w-full h-full scale-125"></div>
+                                                        {/* Fix: Container and reader styling - More "open" for better field of view */}
+                                                        <div className="mx-auto w-[300px] h-[300px] sm:w-[350px] sm:h-[350px] rounded-[40px] overflow-hidden border-2 border-primary/30 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative">
+                                                            <div id="reader" className="w-full h-full [&>video]:object-cover"></div>
                                                             
                                                             {/* Scanning Line Animation Overlay */}
                                                             <div className="absolute top-0 left-0 w-full h-1 bg-primary shadow-[0_0_15px_rgba(246,85,85,0.8)] z-50 animate-scanner-line pointer-events-none" />
                                                             
-                                                            {/* Darken edges to focus on center 250px */}
-                                                            <div className="absolute inset-0 border-[15px] sm:border-[35px] border-black/40 pointer-events-none" />
+                                                            {/* Subtle Corner Markers instead of heavy border */}
+                                                            <div className="absolute inset-8 border border-white/10 rounded-3xl pointer-events-none" />
                                                         </div>
 
                                                         <p className="mt-8 text-center text-xs text-white/40 font-bold leading-relaxed px-6">
