@@ -193,8 +193,12 @@ const Transactions: React.FC = () => {
                 html5QrCode = new Html5Qrcode("reader");
                 
                 const config = { 
-                    fps: 50, 
-                    qrbox: { width: 250, height: 250 },
+                    fps: 30, // 30 FPS é mais estável para processamento em webview
+                    qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const size = Math.floor(minEdge * 0.75);
+                        return { width: size, height: size };
+                    },
                     formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ],
                     disableFlip: false,
                     videoConstraints: {
@@ -321,25 +325,33 @@ const Transactions: React.FC = () => {
             
             let valorDireto = params.get('vNF');
             let dataDireta = params.get('dhEmi');
+            const pParam = params.get('p') || params.get('param');
 
-            // Se a data estiver em Hexadecimal (comum em alguns estados) ou formatada
-            if (dataDireta && dataDireta.length > 8) {
-                // Tenta extrair apenas a parte da data YYYY-MM-DD
-                if (dataDireta.includes('T')) {
-                    dataDireta = dataDireta.split('T')[0];
-                } else if (!dataDireta.includes('-')) {
-                    // Se estiver em hexa ou string colada, tentamos um parse básico
-                    // mas o ideal é deixar o backend tratar se não for óbvio
+            // Lógica para SEFAZ-AP e outros que usam campo pipe-separated 'p'
+            // Se não temos valorDireto mas temos pParam, tentamos extrair a chave
+            if (!valorDireto && pParam) {
+                const parts = pParam.split('|');
+                const chave = parts[0];
+                if (chave && (chave.length === 44 || chave.length === 40)) {
+                    // Extraímos ano/mês da chave de acesso (posições fixas 2-4 e 4-6)
+                    const ano = "20" + chave.substring(2, 4);
+                    const mes = chave.substring(4, 6);
+                    dataDireta = `${ano}-${mes}-01`;
+                    console.log("Data aproximada extraída da Chave:", dataDireta);
                 }
             }
 
-            if (valorDireto) {
-                // Formata ponto para vírgula se necessário
-                valorDireto = valorDireto.replace('.', ',');
-                
+            // Se a data estiver em Hexadecimal ou formatada (ISO)
+            if (dataDireta && dataDireta.length > 8) {
+                if (dataDireta.includes('T')) {
+                    dataDireta = dataDireta.split('T')[0];
+                }
+            }
+
+            if (valorDireto || dataDireta) {
                 setFormData(prev => ({
                     ...prev,
-                    valor: valorDireto || prev.valor,
+                    valor: valorDireto ? valorDireto.replace('.', ',') : prev.valor,
                     data: dataDireta || prev.data,
                     tipo: 'Despesa (Saiu Dinheiro)',
                     categoria: 'Compra de Mercadoria'
@@ -1218,8 +1230,8 @@ const Transactions: React.FC = () => {
                                                         
                                                         {/* Fix: Container and reader styling - More "open" for better field of view */}
                                                         <div className={`mx-auto w-[300px] h-[300px] sm:w-[350px] sm:h-[350px] rounded-[40px] overflow-hidden border-2 transition-all duration-300 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative ${scanningState === 'detected' ? 'border-green-500 scale-105 shadow-[0_0_60px_rgba(34,197,94,0.4)]' : 'border-primary/30'}`}>
-                                                            {/* CSS Filters para melhorar o contraste do papel (ajuda a IA) */}
-                                                            <div id="reader" className="w-full h-full [&>video]:object-cover [&>video]:contrast-[1.2] [&>video]:brightness-[1.1] grayscale-[0.3]"></div>
+                                                            {/* Ajuste de Contraste para Notas com pouca tinta */}
+                                                            <div id="reader" className="w-full h-full [&>video]:object-cover [&>video]:contrast-[1.4] [&>video]:brightness-[1.2]"></div>
                                                             
                                                             {/* Scanning Line Animation Overlay */}
                                                             <div className={`absolute top-0 left-0 w-full h-1 shadow-[0_0_15px_rgba(246,85,85,0.8)] z-50 animate-scanner-line pointer-events-none transition-colors ${scanningState === 'detected' ? 'bg-green-500 shadow-green-500/80' : 'bg-primary'}`} />
@@ -1241,9 +1253,45 @@ const Transactions: React.FC = () => {
                                                             <div className="absolute inset-8 border border-white/10 rounded-3xl pointer-events-none" />
                                                         </div>
 
-                                                        <p className="mt-8 text-center text-xs text-white/40 font-bold leading-relaxed px-6">
+                                                        <p className="mt-8 text-center text-xs text-white/40 font-bold leading-relaxed px-6 mb-6">
                                                             Posicione o <span className="text-white font-black">QR Code no centro do quadrado</span> para leitura instantânea.
                                                         </p>
+
+                                                        <div className="flex flex-col gap-3">
+                                                            <button 
+                                                                onClick={() => {
+                                                                    setIsScannerOpen(false);
+                                                                    const chave = prompt("Digite os 44 números da Chave de Acesso:");
+                                                                    if (chave && (chave.length === 44 || chave.length === 40)) {
+                                                                        handleNfceScan(`http://sefaz.gov.br/nfce/consulta?p=${chave}`);
+                                                                    }
+                                                                }}
+                                                                className="w-full py-4 text-primary text-[10px] font-black uppercase tracking-widest bg-primary/10 border border-primary/20 rounded-2xl hover:bg-primary/20 transition-all"
+                                                            >
+                                                                ⌨️ Digitar Chave Manualmente
+                                                            </button>
+
+                                                            <button 
+                                                                onClick={() => {
+                                                                    setIsScannerOpen(false);
+                                                                    // Simula o clique no input de arquivo escondido no TransactionForm
+                                                                    const ocrInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                                                                    ocrInput?.click();
+                                                                }}
+                                                                className="w-full py-4 text-white/50 text-[10px] font-black uppercase tracking-widest bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all"
+                                                            >
+                                                                📸 Tirar Foto da Nota (OCR)
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="mt-8 flex justify-center opacity-20">
+                                                            <div className="flex gap-1 items-center">
+                                                                <span className="text-[9px] font-black uppercase tracking-tighter mr-2">Estabilizando Foco</span>
+                                                                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                                                                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                                                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )}
