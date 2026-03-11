@@ -1261,24 +1261,11 @@ const Transactions: React.FC = () => {
                                                             <button 
                                                                 onClick={() => {
                                                                     setIsScannerOpen(false);
-                                                                    const chave = prompt("Digite os 44 números da Chave de Acesso:");
-                                                                    if (chave && (chave.length === 44 || chave.length === 40)) {
-                                                                        handleNfceScan(`http://sefaz.gov.br/nfce/consulta?p=${chave}`);
-                                                                    }
-                                                                }}
-                                                                className="w-full py-4 text-primary text-[10px] font-black uppercase tracking-widest bg-primary/10 border border-primary/20 rounded-2xl hover:bg-primary/20 transition-all"
-                                                            >
-                                                                ⌨️ Digitar Chave Manualmente
-                                                            </button>
-
-                                                            <button 
-                                                                onClick={() => {
-                                                                    setIsScannerOpen(false);
                                                                     // Simula o clique no input de arquivo escondido no TransactionForm
                                                                     const ocrInput = document.querySelector('input[type="file"]') as HTMLInputElement;
                                                                     ocrInput?.click();
                                                                 }}
-                                                                className="w-full py-4 text-white/50 text-[10px] font-black uppercase tracking-widest bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all"
+                                                                className="w-full py-6 text-white text-xs font-black uppercase tracking-widest bg-primary border border-primary/20 rounded-2xl hover:bg-primary/80 transition-all shadow-[0_0_20px_rgba(246,85,85,0.3)]"
                                                             >
                                                                 📸 Tirar Foto da Nota (OCR)
                                                             </button>
