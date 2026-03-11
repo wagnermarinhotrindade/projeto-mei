@@ -192,19 +192,12 @@ const Transactions: React.FC = () => {
 
                 html5QrCode = new Html5Qrcode("reader");
                 
-                // Configuração otimizada para ser um quadrado perfeito e dinâmico
-                const qrBoxFunction = (viewfinderWidth: number, viewfinderHeight: number) => {
-                    const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-                    const boxSize = Math.floor(minEdgeSize * 0.75); // 75% da menor borda
-                    return {
-                        width: boxSize,
-                        height: boxSize
-                    };
-                };
+                // Configuração otimizada para ser um quadrado perfeito e fixo de 250px
+                const qrBoxSize = 250;
 
                 const config = { 
                     fps: 30, // Máxima taxa de quadros
-                    qrbox: qrBoxFunction,
+                    qrbox: { width: qrBoxSize, height: qrBoxSize },
                     disableFlip: false, // Importante para algumas câmeras frontais
                     videoConstraints: {
                         facingMode: "environment",
@@ -245,7 +238,7 @@ const Transactions: React.FC = () => {
                         // Tenta sem restrições pesadas de resolução se falhar
                         await html5QrCode?.start(
                             { facingMode: "user" },
-                            { fps: 20, qrbox: qrBoxFunction },
+                            { fps: 20, qrbox: { width: 250, height: 250 } },
                             (decodedText: string) => {
                                 if (decodedText.indexOf('http') !== -1) {
                                     playSuccessSound();
@@ -1125,31 +1118,33 @@ const Transactions: React.FC = () => {
 
                                             {/* Container do Scanner */}
                                             {isScannerOpen && (
-                                                <div className="fixed inset-0 z-[250] flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl p-4">
-                                                    <div className="w-full max-w-lg bg-[#121212] border border-white/10 rounded-[40px] p-6 shadow-2xl overflow-hidden relative">
-                                                        <div className="flex items-center justify-between mb-6">
-                                                            <h3 className="text-lg font-black text-white px-2">Escanear Nota Fiscal (NFC-e)</h3>
+                                                <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4 animate-in fade-in duration-300">
+                                                    <div className="w-full max-w-sm">
+                                                        <div className="flex items-center justify-between mb-8">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary border border-primary/20">
+                                                                    <QrCode size={20} />
+                                                                </div>
+                                                                <h3 className="text-xl font-black text-white">Scanner NFC-e</h3>
+                                                            </div>
                                                             <button 
-                                                                type="button"
                                                                 onClick={() => setIsScannerOpen(false)}
-                                                                className="p-3 bg-white/5 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-all"
+                                                                className="p-2 hover:bg-white/5 rounded-xl transition-all text-white/40 hover:text-white"
                                                             >
-                                                                <X size={20} />
+                                                                <X size={24} />
                                                             </button>
                                                         </div>
-
-                                                        {/* Área da Câmera */}
-                                                        <div id="reader" className="w-full rounded-2xl overflow-hidden bg-black border border-white/5 min-h-[300px]" style={{ aspectRatio: '1/1' }} />
                                                         
-                                                        <div className="mt-6 flex items-start gap-3 p-4 bg-primary/5 rounded-2xl border border-primary/10 text-[10px] text-primary">
-                                                            <Info size={14} className="mt-0.5 flex-shrink-0" />
-                                                            <p className="font-bold leading-relaxed">
-                                                                <b>DICA:</b> Mantenha a câmera a uns 15cm do código. Se estiver escuro, ative a lanterna do celular. O "Beep" confirmará a leitura.
-                                                            </p>
+                                                        {/* Fix: Container and reader styling */}
+                                                        <div className="rounded-[40px] overflow-hidden border-2 border-primary/30 shadow-[0_0_50px_rgba(246,85,85,0.2)] bg-black relative aspect-square">
+                                                            <div id="reader" className="w-full h-full scale-110"></div>
+                                                            
+                                                            {/* Scanning Line Animation Overlay */}
+                                                            <div className="absolute top-0 left-0 w-full h-1 bg-primary shadow-[0_0_15px_rgba(246,85,85,0.8)] z-50 animate-scanner-line pointer-events-none" />
                                                         </div>
 
-                                                        <p className="mt-4 text-center text-[9px] text-white/20 font-black uppercase tracking-widest">
-                                                            Posicione o QR Code no centro do quadrado
+                                                        <p className="mt-8 text-center text-xs text-white/40 font-bold leading-relaxed px-6">
+                                                            Posicione o <span className="text-white font-black">QR Code no centro do quadrado</span> para leitura instantânea.
                                                         </p>
                                                     </div>
                                                 </div>
