@@ -146,6 +146,38 @@ const Transactions: React.FC = () => {
     }, []);
 
     // --- QR Code Scanner Lifecycle ---
+    const playSuccessSound = () => {
+        try {
+            // Vibração (Android/Chrome)
+            if (navigator.vibrate) {
+                navigator.vibrate(200);
+            }
+
+            // Som de Bipe usando Web Audio API (evita carregar arquivos externos)
+            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioContextClass) {
+                const context = new AudioContextClass();
+                const oscillator = context.createOscillator();
+                const gain = context.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(1200, context.currentTime); // Pitch alto para bipe
+                
+                gain.gain.setValueAtTime(0, context.currentTime);
+                gain.gain.linearRampToValueAtTime(0.1, context.currentTime + 0.01);
+                gain.gain.linearRampToValueAtTime(0, context.currentTime + 0.15);
+                
+                oscillator.connect(gain);
+                gain.connect(context.destination);
+                
+                oscillator.start();
+                oscillator.stop(context.currentTime + 0.2);
+            }
+        } catch (e) {
+            console.warn("Feedback tátil/sonoro falhou", e);
+        }
+    };
+
     useEffect(() => {
         let html5QrCode: Html5Qrcode | null = null;
         
@@ -158,39 +190,54 @@ const Transactions: React.FC = () => {
                 if (!element) return;
 
                 html5QrCode = new Html5Qrcode("reader");
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                
+                // Configuração otimizada para ser um quadrado perfeito e dinâmico
+                const qrBoxFunction = (viewfinderWidth: number, viewfinderHeight: number) => {
+                    const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                    const boxSize = Math.floor(minEdgeSize * 0.75); // 75% da menor borda
+                    return {
+                        width: boxSize,
+                        height: boxSize
+                    };
+                };
+
+                const config = { 
+                    fps: 15, 
+                    qrbox: qrBoxFunction,
+                    aspectRatio: 1.0 // Força o viewfinder a ser quadrado
+                };
                 
                 try {
                     await html5QrCode.start(
                         { facingMode: "environment" },
                         config,
                         (decodedText: string) => {
+                            playSuccessSound(); // Feedback instantâneo
                             handleNfceScan(decodedText);
+                            
                             if (html5QrCode) {
                                 html5QrCode.stop().then(() => {
                                     setIsScannerOpen(false);
                                 }).catch(err => console.error("Error stopping scanner:", err));
                             }
                         },
-                        (errorMessage: string) => {
-                            // Ignorar erros de scan (falha ao encontrar QR no frame)
-                        }
+                        () => {} // Ignorar erros de leitura de frame
                     );
                 } catch (err) {
                     console.error("Erro ao iniciar câmera:", err);
-                    // Se falhar o modo environment, tenta qualquer câmera disponível
                     try {
                         await html5QrCode?.start(
-                            { facingMode: "user" }, // Fallback para câmera frontal
+                            { facingMode: "user" },
                             config,
                             (decodedText: string) => {
+                                playSuccessSound();
                                 handleNfceScan(decodedText);
                                 html5QrCode?.stop().then(() => setIsScannerOpen(false));
                             },
-                            (error: string) => {} // Adicionado callback de erro vazio
+                            (error: string) => {}
                         );
                     } catch (finalErr) {
-                        alert("Não foi possível acessar a câmera. Verifique se o site tem permissão ou se você está usando HTTPS.");
+                        alert("Certifique-se de que o site tem permissão de câmera e está em HTTPS.");
                         setIsScannerOpen(false);
                     }
                 }
@@ -201,7 +248,7 @@ const Transactions: React.FC = () => {
 
         return () => {
             if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().catch(err => console.error("Error clearing scanner on unmount:", err));
+                html5QrCode.stop().catch(err => console.error("Error sub-mounting scanner:", err));
             }
         };
     }, [isScannerOpen]);
