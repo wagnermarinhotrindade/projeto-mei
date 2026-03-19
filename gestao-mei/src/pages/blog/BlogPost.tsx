@@ -14,6 +14,115 @@ interface PostContent {
 }
 
 const posts: Record<string, PostContent> = {
+    'beneficios-previdenciarios-mei-2026': {
+        title: "🛡️ Como declarar o novo benefício de previdência do MEI em 2026: Guia Completo.",
+        description: "As regras mudaram e agora o MEI tem acesso a novos auxílios. Saiba como não perder seus direitos.",
+        category: "Previdência",
+        date: "19 de Março, 2026",
+        readTime: "5 min de leitura",
+        image: "/previdencia-mei-2026.png",
+        content: (
+            <>
+                <p>Em 2026, a Previdência Social atualizou os benefícios para o Microempreendedor Individual. Além da aposentadoria por idade e salário-maternidade, agora o sistema de pontos foi simplificado. Mas atenção: para ter direito, o seu DAS deve estar rigorosamente em dia.</p>
+
+                <p>Para declarar o recebimento de benefícios no seu Imposto de Renda ou na Declaração Anual (DASN-SIMEI), você deve separar o que é rendimento isento do que é tributável.</p>
+                
+                <h3>Dica de Ouro</h3>
+                <p>Use o radar do Gestão MEI para monitorar seus pagamentos do DAS e garantir que sua carência previdenciária nunca seja interrompida por esquecimento.</p>
+
+                <div className="mt-12 flex justify-center">
+                    <Link 
+                        to="/auth"
+                        className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all hover:scale-105 flex items-center gap-3 shadow-lg shadow-red-600/20"
+                    >
+                        Quero meu Teste Grátis de 15 Dias
+                        <Zap size={16} />
+                    </Link>
+                </div>
+            </>
+        )
+    },
+    'recuperacao-cnpj-suspenso': {
+        title: "⚠️ Meu CNPJ foi suspenso por falta de faturamento: O que fazer agora?",
+        description: "Não entre em pânico. Saiba como regularizar sua situação e evitar o cancelamento definitivo do seu registro.",
+        category: "Regularização",
+        date: "18 de Março, 2026",
+        readTime: "4 min de leitura",
+        image: "/cnpj-suspenso-alert.png",
+        content: (
+            <>
+                <p>"Muitos empreendedores acreditam que, se não houver vendas, não é preciso declarar nada. Erro grave! A Receita Federal pode suspender o seu CNPJ por 'omissão de declarações'. Se o seu status está como 'Suspenso', o primeiro passo é entregar as Declarações Anuais (DASN) pendentes, mesmo que estejam zeradas.</p>
+
+                <p>Após o envio, será gerada uma multa por atraso. Regularize os débitos e o seu CNPJ voltará à ativa em poucos dias.</p>
+                
+                <h3>Como evitar que aconteça de novo?</h3>
+                <p>Tenha um sistema que te avise das obrigações. No Gestão MEI, nós notificamos você sobre todos os prazos críticos para que você foque em vender, enquanto nós cuidamos da burocracia.</p>
+
+                <div className="mt-12 flex justify-center">
+                    <Link 
+                        to="/auth"
+                        className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all hover:scale-105 flex items-center gap-3 shadow-lg shadow-red-600/20"
+                    >
+                        Quero meu Teste Grátis de 15 Dias
+                        <Zap size={16} />
+                    </Link>
+                </div>
+            </>
+        )
+    },
+    'calculadora-preco-venda-lucro': {
+        title: "📊 Calculadora de Preço de Vendas para MEI: Não confunda Faturamento com Lucro!",
+        description: "Vender muito não significa ganhar dinheiro. Aprenda a precificar corretamente e veja a cor do seu lucro no final do mês.",
+        category: "Elite",
+        date: "17 de Março, 2026",
+        readTime: "6 min de leitura",
+        image: "/calculadora-lucro-venda.png",
+        content: (
+            <>
+                <p>Você vende, vende e, no final do mês, a conta não fecha? O erro pode estar na precificação. Muitos MEIs somam o custo do produto e colocam uma 'margem' de 50%, esquecendo dos custos fixos, DAS, taxas de cartão e a reserva para o próprio salário (Pró-labore).</p>
+
+                <p>Faturamento é tudo o que entra. Lucro é o que sobra depois de pagar TUDO e todos.</p>
+                
+                <h3>A solução:</h3>
+                <p>Utilize a nossa calculadora interna no Gestão MEI para descobrir seu 'ponto de equilíbrio'. Nosso app separa automaticamente suas despesas pessoais das profissionais, mostrando a saúde real do seu negócio em tempo real.</p>
+
+                <div className="mt-12 flex justify-center">
+                    <Link 
+                        to="/auth"
+                        className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all hover:scale-105 flex items-center gap-3 shadow-lg shadow-red-600/20"
+                    >
+                        Quero meu Teste Grátis de 15 Dias
+                        <Zap size={16} />
+                    </Link>
+                </div>
+            </>
+        )
+    },
+    'valor-gestao-profissional-mei': {
+        title: "🔥 Por que 15 dias de gestão profissional podem salvar o seu ano?",
+        description: "O caos financeiro é o maior inimigo do pequeno empresário. Descubra como a organização transforma o seu negócio.",
+        category: "Gestão",
+        date: "16 de Março, 2026",
+        readTime: "4 min de leitura",
+        image: "/gestao-profissional-fin.png",
+        content: (
+            <>
+                <p>As estatísticas não mentem: a maioria das empresas que fecham no primeiro ano falham por falta de gestão financeira. Mas e se você tivesse um consultor digital por 15 dias, de graça?</p>
+
+                <p>Estamos liberando o Plano Elite do Gestão MEI por 15 dias gratuitos. Nesse período, você vai escanear suas notas fiscais via QR Code, ver seu gráfico de lucro subir e entender exatamente para onde está indo cada centavo. Teste a tecnologia que grandes empresas usam, adaptada para o seu bolso de MEI. Não é apenas um app, é a sua sobrevivência no mercado.</p>
+
+                <div className="mt-12 flex justify-center">
+                    <Link 
+                        to="/auth"
+                        className="bg-red-600 hover:bg-red-500 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all hover:scale-105 flex items-center gap-3 shadow-lg shadow-red-600/20"
+                    >
+                        Quero meu Teste Grátis de 15 Dias
+                        <Zap size={16} />
+                    </Link>
+                </div>
+            </>
+        )
+    },
     'tecnologia-leitura-direta-nfce': {
         title: "Gestão MEI revoluciona: Lançamento de notas fiscais via QR Code agora com 'Tecnologia de Leitura Direta'",
         description: "Descubra como a nova tecnologia do Gestão MEI pula os Captchas dos sites do governo e extrai dados de notas fiscais em menos de 1 segundo.",

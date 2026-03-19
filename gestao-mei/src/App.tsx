@@ -13,12 +13,14 @@ import Settings from './pages/Settings';
 import Feedback from './pages/Feedback';
 import AppLayout from './components/layout/AppLayout';
 import LandingPage from './pages/LandingPage';
+import Clients from './pages/Clients';
 import AuthCallback from './pages/AuthCallback';
 import PaymentError from './pages/PaymentError';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import BlogList from './pages/blog/BlogList';
 import BlogPost from './pages/blog/BlogPost';
+import EmitterWaitlist from './pages/EmitterWaitlist';
 
 // Component to handle Pixel PageViews on route change
 const FacebookPixelTracker = () => {
@@ -140,9 +142,10 @@ function App() {
                 <Route element={session ? <AppLayout /> : <Navigate to="/auth" replace />}>
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/transactions" element={<Transactions />} />
+                    <Route path="/emitter" element={<EmitterWaitlist />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/feedback" element={<Feedback />} />
-                    <Route path="/clients" element={<Placeholder title="Clientes" />} />
+                    <Route path="/clients" element={<Clients />} />
                     <Route path="/settings" element={<Settings />} />
                 </Route>
             </Routes>

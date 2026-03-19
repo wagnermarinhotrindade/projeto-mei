@@ -18,15 +18,29 @@ import { supabase } from '../../lib/supabase';
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
+    profile?: any;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, profile }) => {
     const navigate = useNavigate();
+
+    // Mapping plan names for display
+    const getPlanoLabel = (p: string) => {
+        const planos: Record<string, string> = {
+            'gratis': 'Plano Gratuito',
+            'pro': 'MEI Pro',
+            'elite': 'MEI Elite',
+            'elite_pro': 'Elite Pro'
+        };
+        return planos[p] || 'MEI Ativo';
+    };
+
     const menuItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
         { icon: ShoppingCart, label: 'Lançamentos', path: '/transactions' },
+        { icon: FileText, label: 'Emissor NF-e/NFS-e', path: '/emitter', badge: 'Novo' },
         { icon: FileBarChart, label: 'Relatórios', path: '/reports' },
-        { icon: MessageSquare, label: 'Feedback', path: '/feedback' },
+        { icon: Users, label: 'Clientes', path: '/clients' },
         { icon: Settings, label: 'Configurações', path: '/settings' },
     ];
 
@@ -40,13 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             }`}>
             <div className="flex items-center justify-between gap-3 mb-10">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group transition-all duration-300 hover:bg-primary hover:text-white border border-primary/20 cursor-pointer">
-                        <Gem size={22} className="group-hover:rotate-12 transition-transform" />
-                    </div>
-                    <div>
-                        <h1 className="font-extrabold text-lg leading-tight">Gestão MEI</h1>
-                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest opacity-80">Profissional</p>
-                    </div>
+                    <img src="/logo.png" alt="Gestão MEI" className="h-10 object-contain" />
                 </div>
 
                 {/* Close Button Mobile */}
@@ -72,7 +80,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                         }
                     >
                         <item.icon size={20} className="transition-transform group-hover:scale-110" />
-                        <span className="font-bold text-sm tracking-tight">{item.label}</span>
+                        <span className="font-bold text-sm tracking-tight flex-1">{item.label}</span>
+                        {item.badge && (
+                            <span className="px-1.5 py-0.5 bg-primary/20 text-primary text-[8px] font-black uppercase rounded-md border border-primary/20 animate-pulse">
+                                {item.badge}
+                            </span>
+                        )}
                     </NavLink>
                 ))}
             </nav>
@@ -81,11 +94,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 {/* User Profile Card */}
                 <div className="bg-white/5 border border-white/5 p-4 rounded-2xl flex items-center gap-3">
                     <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white/40 overflow-hidden border border-white/5">
-                        <User size={24} />
+                        {profile?.avatar_url ? (
+                            <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <User size={24} />
+                        )}
                     </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-black text-white/90 leading-none">Perfil</p>
-                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">MEI Ativo</p>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-black text-white/90 leading-none truncate">{profile?.nome_completo || 'Perfil'}</p>
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1 truncate">{getPlanoLabel(profile?.plano)}</p>
                     </div>
                 </div>
 

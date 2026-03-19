@@ -169,30 +169,27 @@ const LandingPage: React.FC = () => {
             <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0D0D0D]/80 backdrop-blur-md">
                 <div className="container mx-auto px-6 py-4 flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-rose-700 rounded-xl flex items-center justify-center shadow-lg shadow-red-600/20">
-                            <span className="font-black text-xs text-white tracking-wider">MEI</span>
-                        </div>
-                        <span className="text-xl font-bold tracking-tight">Gestão<span className="text-red-500">MEI</span></span>
+                        <img src="/logo.png" alt="Gestão MEI Logo" className="h-10 w-auto" />
                     </Link>
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 text-sm font-bold">
                         <Link
                             to="/blog"
-                            className="text-sm font-semibold text-white/70 hover:text-white transition-colors"
+                            className="text-white/70 hover:text-white transition-colors"
                         >
-                            Blog
+                            Conteúdo (Blog)
                         </Link>
                         <Link
                             to="/auth"
-                            className="text-sm font-semibold text-white/70 hover:text-white transition-colors"
+                            className="hidden md:block text-white/70 hover:text-white transition-colors"
                         >
-                            Já tenho conta
+                            Entrar
                         </Link>
                         <button
                             onClick={scrollToPricing}
-                            className="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-bold transition-all shadow-lg shadow-red-600/20"
+                            className="bg-red-600 hover:bg-red-500 text-white px-6 py-2.5 rounded-xl font-black transition-all shadow-lg shadow-red-600/20"
                         >
-                            Acessar Central
+                            Teste Grátis
                         </button>
                     </div>
                 </div>
@@ -205,25 +202,28 @@ const LandingPage: React.FC = () => {
                     
                     <div className="container mx-auto px-6 relative z-10 text-center">
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-bold mb-8 uppercase tracking-widest">
-                            <Lock size={14} />
-                            Segurança Fiscal de Elite
+                            <Zap size={14} fill="currentColor" className="animate-pulse" />
+                            Oferta Exclusiva: 15 Dias de Trial ELITE
                         </div>
 
-                        <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight tracking-tight max-w-5xl mx-auto">
-                            O fim da dúvida e do medo de <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400">desenquadrar seu MEI.</span>
+                        <h1 className="text-5xl md:text-7xl font-black mb-6 leading-[1.1] tracking-tighter max-w-5xl mx-auto">
+                            Pare de trabalhar só para pagar boletos. <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-rose-400">Descubra onde está o lucro do seu MEI.</span>
                         </h1>
 
-                        <p className="text-xl md:text-2xl text-white/60 mb-12 font-medium max-w-3xl mx-auto leading-relaxed">
-                            Use a Inteligência Preditiva para prever seu faturamento, organizar seus impostos e emitir relatórios de auditoria prontos para a Receita Federal.
+                        <p className="text-xl md:text-2x text-white/60 mb-12 font-medium max-w-3xl mx-auto leading-relaxed">
+                            Organize seu financeiro em minutos, preveja impostos e tenha relatórios prontos para a Receita. Tudo isso com o Plano Elite grátis por 15 dias.
                         </p>
 
                         <button
                             onClick={scrollToPricing}
-                            className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-12 py-5 rounded-2xl font-black text-lg shadow-2xl shadow-red-600/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mx-auto"
+                            className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-12 py-5 rounded-2xl font-black text-xl shadow-2xl shadow-red-600/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mx-auto"
                         >
-                            Começar Agora Gratuitamente
-                            <ArrowRight size={20} />
+                            Quero meu Teste Grátis de 15 dias
+                            <ArrowRight size={22} strokeWidth={3} />
                         </button>
+                        <p className="mt-6 text-sm text-white/30 font-bold uppercase tracking-widest">
+                            Sem cartão de crédito necessário
+                        </p>
                     </div>
                 </section>
                 
@@ -566,11 +566,11 @@ const LandingPage: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-2 md:text-right">
                         <div className="flex items-center gap-4 md:justify-end mb-2">
-                            <a href="/blog" className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">Blog</a>
+                            <Link to="/blog" className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">Conteúdo (Blog)</Link>
                             <span className="w-1 h-1 bg-white/10 rounded-full" />
-                            <a href="/termos" className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">Termos</a>
+                            <Link to="/terms" className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">Termos</Link>
                             <span className="w-1 h-1 bg-white/10 rounded-full" />
-                            <a href="/privacidade" className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">Privacidade</a>
+                            <Link to="/privacy" className="text-white/40 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors">Privacidade</Link>
                         </div>
                         <p className="text-white/40 text-sm font-medium">
                             © {new Date().getFullYear()} Gestão MEI. Todos os direitos reservados.

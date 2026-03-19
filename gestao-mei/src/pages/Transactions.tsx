@@ -202,13 +202,10 @@ const Transactions: React.FC = () => {
                     disableFlip: false,
                     videoConstraints: {
                         facingMode: "environment",
-                        focusMode: { ideal: "continuous" },
-                        exposureMode: { ideal: "continuous" },
-                        whiteBalanceMode: { ideal: "continuous" },
-                        width: { min: 1280, ideal: 1920, max: 2560 },
-                        height: { min: 720, ideal: 1080, max: 1440 }
+                        focusMode: 'continuous',
+                        width: { exact: 1280 },
+                        height: { exact: 720 }
                     },
-                    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
                     aspectRatio: 1.0
                 };
                 
@@ -234,26 +231,9 @@ const Transactions: React.FC = () => {
                             }
                         },
                         (errorMessage: string) => {
-                            if (errorMessage.indexOf("NotFoundException") === -1) {
-                                console.log(`QR Scanner Debug: ${errorMessage}`);
-                            }
+                            // Silenciar logs de não encontrado para performance
                         } 
                     );
-
-                    // Hunting: Zoom leve para ajudar no foco inicial
-                    let zoomLevel = 1;
-                    const huntInterval = setInterval(() => {
-                        if (html5QrCode?.getState() === 2 && scanningState === 'scanning') {
-                            const track = (html5QrCode as any).getRunningTrack();
-                            const capabilities = track.getCapabilities() as any;
-                            if (capabilities.zoom) {
-                                zoomLevel = zoomLevel === 1 ? Math.min(1.2, capabilities.zoom.max) : 1;
-                                track.applyConstraints({ advanced: [{ zoom: zoomLevel }] } as any);
-                            }
-                        } else {
-                            clearInterval(huntInterval);
-                        }
-                    }, 5000);
 
                 } catch (err) {
                     console.error("Scanner fallback:", err);

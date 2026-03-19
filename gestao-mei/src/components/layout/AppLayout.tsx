@@ -9,6 +9,7 @@ const AppLayout: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isPro, setIsPro] = useState(true); // Default to true to avoid flash
     const [user, setUser] = useState<any>(null);
+    const [profile, setProfile] = useState<any>(null);
 
     useEffect(() => {
         const checkPlan = async () => {
@@ -16,13 +17,23 @@ const AppLayout: React.FC = () => {
             if (!user) return;
             setUser(user);
 
-            const { data: profile } = await supabase
+            const { data: profileData } = await supabase
                 .from('users_profile')
-                .select('plano')
+                .select('*')
                 .eq('id', user.id)
                 .single();
 
-            setIsPro(profile?.plano === 'pro');
+            setProfile(profileData);
+            
+            // LÓGICA DE TRIAL (Replica o Dashboard)
+            const userCreatedDate = new Date(profileData?.created_at || user.created_at || new Date());
+            const trialEndDate = new Date(userCreatedDate.getTime() + 15 * 24 * 60 * 60 * 1000);
+            const isTrialActive = new Date() < trialEndDate;
+
+            const isPaidActive = profileData?.plan_status === 'active' || profileData?.plan_status === 'pro';
+            const isElitePlan = ['pro', 'elite', 'elite_pro'].includes(profileData?.plano || '');
+
+            setIsPro((isTrialActive && (!profileData || profileData.plano === 'gratis')) || (isPaidActive && isElitePlan));
         };
         checkPlan();
     }, []);
@@ -45,7 +56,11 @@ const AppLayout: React.FC = () => {
                 />
             )}
 
-            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+            <Sidebar 
+                isOpen={isSidebarOpen} 
+                onClose={() => setIsSidebarOpen(false)} 
+                profile={profile}
+            />
 
             <main className="flex-1 w-full min-h-screen transition-all duration-300 md:ml-64 p-4 md:p-8">
                 {/* Mobile Header Menu Trigger */}
@@ -54,7 +69,7 @@ const AppLayout: React.FC = () => {
                         <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center text-primary border border-primary/20">
                             <Menu size={18} onClick={() => setIsSidebarOpen(true)} className="cursor-pointer" />
                         </div>
-                        <span className="font-black text-xs uppercase tracking-widest text-white/40">Gestão MEI</span>
+                        <img src="/logo.png" alt="Gestão MEI" className="h-6 object-contain" />
                     </div>
                 </div>
 

@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { startStripeCheckout } from '../lib/stripe';
 import FiscalHealthCard from '../components/dashboard/FiscalHealthCard';
 import DASCountdown from '../components/dashboard/DASCountdown';
+import TrialCountdown from '../components/dashboard/TrialCountdown';
 import PredictiveChart from '../components/dashboard/PredictiveChart';
 import SEO from '../components/layout/SEO';
 
@@ -15,6 +16,7 @@ const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [isPro, setIsPro] = useState(false);
+    const [isTrialActive, setIsTrialActive] = useState(false);
     const [user, setUser] = useState<any>(null);
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const [searchParams] = useSearchParams();
@@ -35,17 +37,28 @@ const Dashboard: React.FC = () => {
             alert('Assinatura confirmada! Seu Plano Pro já está ativo. Aproveite os recursos ilimitados.');
         }
 
-        const { data: profile } = await supabase
+        let { data: profile } = await supabase
             .from('users_profile')
-            .select('plano, plan_status')
+            .select('plano, plan_status, created_at')
             .eq('id', currentUser.id)
             .single();
 
-        // SEGURANÇA: Verificação robusta de Pro baseada em plano e status
-        const isActive = profile?.plan_status === 'active' || profile?.plan_status === 'pro';
-        const isProPlan = ['pro', 'elite', 'elite_pro'].includes(profile?.plano || '');
-        
-        setIsPro(isActive && isProPlan);
+        // LÓGICA DE TRIAL (Estratégico p/ Conversão)
+        const userCreatedDate = new Date(profile?.created_at || currentUser.created_at || new Date());
+        const trialEndDate = new Date(userCreatedDate.getTime() + 15 * 24 * 60 * 60 * 1000);
+        const trialActive = new Date() < trialEndDate;
+        setIsTrialActive(trialActive);
+
+        // Se for novo e o plano estiver vazio ou for "gratis" e estiver no trial => Eleva para Elite
+        if (trialActive && (!profile || profile.plano === 'gratis')) {
+            // No frontend, mostramos como Elite Pro
+            setIsPro(true);
+        } else {
+            // SEGURANÇA: Verificação padrão de Pro baseada em plano e status
+            const isActive = profile?.plan_status === 'active' || profile?.plan_status === 'pro';
+            const isProPlan = ['pro', 'elite', 'elite_pro'].includes(profile?.plano || '');
+            setIsPro(isActive && isProPlan);
+        }
 
         const { data, error } = await supabase
             .from('transacoes')
@@ -308,11 +321,19 @@ const Dashboard: React.FC = () => {
 
             {/* Terceira linha: Widget DAS + Mini-stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Trial Countdown (Elite) */}
+                {user && isTrialActive && (
+                    <TrialCountdown 
+                        createdAt={user.created_at} 
+                        onUpgrade={handleUpgrade} 
+                    />
+                )}
+
                 {/* DAS Countdown */}
                 <DASCountdown />
 
                 {/* Mini stats extras */}
-                <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6">
+                <div className={`${isTrialActive ? 'md:col-span-1' : 'md:col-span-2'} bg-white/5 border border-white/10 rounded-3xl p-6`}>
                     <div className="flex items-center gap-3 mb-5">
                         <div className="p-2.5 bg-primary/10 border border-primary/20 rounded-2xl text-primary">
                             <BarChart2 size={18} />

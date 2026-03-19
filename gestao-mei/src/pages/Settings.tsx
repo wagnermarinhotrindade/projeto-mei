@@ -27,6 +27,9 @@ const Settings: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
+    const [plano, setPlano] = useState("gratis");
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
     useEffect(() => {
         const fetchProfile = async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -38,13 +41,14 @@ const Settings: React.FC = () => {
                 .eq('id', user.id)
                 .single();
 
-            if (error && error.code !== 'PGRST116') { // PGRST116 is 'no rows'
-                console.error(error);
-            } else if (data) {
+            if (data) {
                 setName(data.nome_completo || "");
                 setCompanyName(data.nome_empresa || "");
                 setCnpj(data.cnpj || "");
                 setCpf(data.cpf || "");
+                setPlano(data.plano || "gratis");
+                setAvatarUrl(data.avatar_url || null);
+                setProfileImage(data.avatar_url || null);
             }
             setIsLoading(false);
         };
@@ -61,15 +65,42 @@ const Settings: React.FC = () => {
         document.getElementById('profile-upload')?.click();
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setProfileImage(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // Preview local
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setProfileImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+
+        // Upload imediato para melhor UX
+        setIsSaving(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, file);
+
+        if (uploadError) {
+            alert('Erro ao carregar imagem: ' + uploadError.message);
+            setIsSaving(false);
+            return;
         }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+        setAvatarUrl(publicUrl);
+        setIsSaving(false);
     };
 
     const handleSave = async () => {
@@ -85,6 +116,7 @@ const Settings: React.FC = () => {
                 nome_empresa: companyName,
                 cnpj: cnpj,
                 cpf: cpf,
+                avatar_url: avatarUrl
             });
 
         if (error) {
@@ -93,6 +125,17 @@ const Settings: React.FC = () => {
             alert('Configurações salvas com sucesso!');
         }
         setIsSaving(false);
+    };
+
+    // Helper para formatar o nome do plano
+    const getPlanoFormatado = (p: string) => {
+        const planos: Record<string, string> = {
+            'gratis': 'Plano Gratuito',
+            'pro': 'Plano Pro Ativo',
+            'elite': 'Plano Elite',
+            'elite_pro': 'Elite Pro'
+        };
+        return planos[p] || 'Plano MEI';
     };
 
     return (
@@ -137,8 +180,8 @@ const Settings: React.FC = () => {
                                     <Camera size={16} />
                                 </button>
                             </div>
-                            <h3 className="text-xl font-black">{name}</h3>
-                            <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">Plano Profissional</p>
+                            <h3 className="text-xl font-black">{name || 'Seu Nome'}</h3>
+                            <p className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">{getPlanoFormatado(plano)}</p>
                         </div>
 
                         <div className="bg-white/[0.03] border border-white/5 rounded-[32px] p-2">

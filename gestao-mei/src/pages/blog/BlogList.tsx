@@ -5,6 +5,38 @@ import SEO from '../../components/layout/SEO';
 
 const blogPosts = [
     {
+        title: "🛡️ Como declarar o novo benefício de previdência do MEI em 2026: Guia Completo.",
+        slug: "beneficios-previdenciarios-mei-2026",
+        excerpt: "As regras mudaram e agora o MEI tem acesso a novos auxílios. Saiba como não perder seus direitos.",
+        date: "19 de Março, 2026",
+        category: "Previdência",
+        image: "/previdencia-mei-2026.png"
+    },
+    {
+        title: "⚠️ Meu CNPJ foi suspenso por falta de faturamento: O que fazer agora?",
+        slug: "recuperacao-cnpj-suspenso",
+        excerpt: "Não entre em pânico. Saiba como regularizar sua situação e evitar o cancelamento definitivo do seu registro.",
+        date: "18 de Março, 2026",
+        category: "Regularização",
+        image: "/cnpj-suspenso-alert.png"
+    },
+    {
+        title: "📊 Calculadora de Preço de Vendas para MEI: Não confunda Faturamento com Lucro!",
+        slug: "calculadora-preco-venda-lucro",
+        excerpt: "Vender muito não significa ganhar dinheiro. Aprenda a precificar corretamente e veja a cor do seu lucro no final do mês.",
+        date: "17 de Março, 2026",
+        category: "Elite",
+        image: "/calculadora-lucro-venda.png"
+    },
+    {
+        title: "🔥 Por que 15 dias de gestão profissional podem salvar o seu ano?",
+        slug: "valor-gestao-profissional-mei",
+        excerpt: "O caos financeiro é o maior inimigo do pequeno empresário. Descubra como a organização transforma o seu negócio.",
+        date: "16 de Março, 2026",
+        category: "Gestão",
+        image: "/gestao-profissional-fin.png"
+    },
+    {
         title: "Gestão MEI revoluciona: Lançamento de notas fiscais via QR Code agora com 'Tecnologia de Leitura Direta'",
         slug: "tecnologia-leitura-direta-nfce",
         excerpt: "Microempreendedores do Amapá e de todo o Brasil agora podem automatizar seu livro caixa em menos de 1 segundo, pulando as barreiras dos sites do governo.",
