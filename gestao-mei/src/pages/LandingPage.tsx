@@ -169,7 +169,7 @@ const LandingPage: React.FC = () => {
             <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#0D0D0D]/80 backdrop-blur-md">
                 <div className="container mx-auto px-6 py-4 flex items-center justify-between">
                     <Link to="/" className="flex items-center gap-3">
-                        <img src="/logo.png" alt="Gestão MEI Logo" className="h-10 w-auto" />
+                        <img src="/logo.png" alt="Gestão MEI Logo" className="h-12 w-auto" />
                     </Link>
 
                     <div className="flex items-center gap-6 text-sm font-bold">
@@ -216,9 +216,9 @@ const LandingPage: React.FC = () => {
 
                         <button
                             onClick={scrollToPricing}
-                            className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-12 py-5 rounded-2xl font-black text-xl shadow-2xl shadow-red-600/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mx-auto"
+                            className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white px-10 py-5 rounded-2xl font-black text-lg md:text-xl shadow-2xl shadow-red-600/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3 mx-auto uppercase tracking-tight"
                         >
-                            Quero meu Teste Grátis de 15 dias
+                            Quero meu Teste Grátis de 15 Dias
                             <ArrowRight size={22} strokeWidth={3} />
                         </button>
                         <p className="mt-6 text-sm text-white/30 font-bold uppercase tracking-widest">

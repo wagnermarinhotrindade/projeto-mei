@@ -54,7 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, profile }) => {
             }`}>
             <div className="flex items-center justify-between gap-3 mb-10">
                 <div className="flex items-center gap-3">
-                    <img src="/logo.png" alt="Gestão MEI" className="h-10 object-contain" />
+                    <img src="/logo.png" alt="Gestão MEI" className="h-12 object-contain" />
                 </div>
 
                 {/* Close Button Mobile */}
