@@ -42,6 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, profile }) => {
         { icon: FileBarChart, label: 'Relatórios', path: '/reports' },
         { icon: Users, label: 'Clientes', path: '/clients' },
         { icon: Settings, label: 'Configurações', path: '/settings' },
+        { icon: MessageSquare, label: 'Central de Feedback', path: '/feedback' },
     ];
 
     const handleLogout = async () => {
